@@ -1,0 +1,23 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "SimpleUECharts",
+  "Description": "Lightweight Unreal Engine charts for UMG and Slate.",
+  "Category": "UI",
+  "CreatedBy": "",
+  "CreatedByURL": "",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "SimpleUECharts",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
