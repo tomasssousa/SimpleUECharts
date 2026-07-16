@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartStyles.h"
 #include "Widgets/SLeafWidget.h"
 
 class SIMPLEUECHARTS_API SBarChart : public SLeafWidget
@@ -14,12 +15,8 @@ public:
 
     void SetData(const TArray<FChartDataPoint>& NewData);
     void ClearData();
-    void SetBarSpacing(float InBarSpacing);
-    void SetChartPadding(const FMargin& InChartPadding);
-    void SetShowLabels(bool bInShowLabels);
-    void SetShowValues(bool bInShowValues);
-    void SetShowYAxis(bool bInShowYAxis);
-    void SetShowGridLines(bool bInShowGridLines);
+    void SetChartStyle(const FChartStyle& InChartStyle);
+    void SetBarChartStyle(const FBarChartStyle& InBarChartStyle);
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -60,15 +57,12 @@ private:
     void RecalculateChart();
     void InvalidateCachedLayout();
     void EnsureCachedLayout(const FVector2D& LocalSize) const;
+    FSlateFontInfo GetChartFont() const;
 
     TArray<FChartDataPoint> Data;
     TArray<FCachedBarData> CachedBars;
-    float BarSpacing = 6.0f;
-    FMargin ChartPadding = FMargin(8.0f);
-    bool bShowLabels = true;
-    bool bShowValues = true;
-    bool bShowYAxis = true;
-    bool bShowGridLines = false;
+    FChartStyle ChartStyle;
+    FBarChartStyle BarChartStyle;
     float CachedMaxValue = 0.0f;
     mutable bool bLayoutDirty = true;
     mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);

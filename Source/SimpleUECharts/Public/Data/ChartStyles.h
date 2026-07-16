@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Fonts/SlateFontInfo.h"
+#include "Styling/CoreStyle.h"
 #include "ChartStyles.generated.h"
 
 USTRUCT(BlueprintType)
@@ -9,20 +10,29 @@ struct SIMPLEUECHARTS_API FChartStyle
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FLinearColor BackgroundColor = FLinearColor::Transparent;
+    FChartStyle()
+        : BackgroundColor(FLinearColor::Transparent)
+        , TextColor(FLinearColor::White)
+        , Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 10))
+        , Padding(8.0f)
+        , LabelPadding(4.0f)
+    {
+    }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FLinearColor TextColor = FLinearColor::White;
+    FLinearColor BackgroundColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FLinearColor TextColor;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     FSlateFontInfo Font;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FMargin Padding = FMargin(8.0f);
+    FMargin Padding;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FMargin LabelPadding = FMargin(4.0f);
+    FMargin LabelPadding;
 };
 
 USTRUCT(BlueprintType)
@@ -30,32 +40,45 @@ struct SIMPLEUECHARTS_API FBarChartStyle
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float BarSpacing = 8.0f;
+    FBarChartStyle()
+        : BarSpacing(8.0f)
+        , MinimumBarWidth(8.0f)
+        , MaximumBarWidth(128.0f)
+        , bShowLabels(true)
+        , bShowValues(true)
+        , bShowYAxis(true)
+        , bShowGridLines(false)
+        , AxisColor(FLinearColor::White)
+        , GridLineColor(0.25f, 0.25f, 0.25f, 1.0f)
+    {
+    }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float MinimumBarWidth = 8.0f;
+    float BarSpacing;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float MaximumBarWidth = 128.0f;
+    float MinimumBarWidth;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLabels = true;
+    float MaximumBarWidth;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowValues = true;
+    bool bShowLabels;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowYAxis = true;
+    bool bShowValues;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowGridLines = true;
+    bool bShowYAxis;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FLinearColor AxisColor = FLinearColor::White;
+    bool bShowGridLines;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FLinearColor GridLineColor = FLinearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    FLinearColor AxisColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FLinearColor GridLineColor;
 };
 
 USTRUCT(BlueprintType)

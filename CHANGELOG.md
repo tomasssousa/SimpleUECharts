@@ -68,3 +68,14 @@ All notable changes to this project will be documented in this file.
 - Fixed the phase 11 pie-chart cached mesh path so the current widget render
   transform is reapplied during `OnPaint()`, keeping the chart scaled and
   positioned inside its allotted area.
+- Integrated the phase 12 bar-chart styling path so `UBarChartWidget` now
+  exposes reusable `FChartStyle` and `FBarChartStyle` properties instead of
+  relying on separate bar-chart presentation fields.
+- Updated `SBarChart` to render from reusable style structs for background,
+  text, padding, spacing, label/value visibility, axis/grid colors, and
+  preferred minimum/maximum bar-width behavior.
+- Verified the phase 12 bar-chart styling implementation by compiling the host
+  `GoTwinAppEditor` target successfully on July 16, 2026.
+- Documented that the bar-chart portion of phase 12 is complete while the
+  overall roadmap milestone remains open until the pie chart adopts the same
+  styling system.

@@ -17,15 +17,27 @@ void UBarChartWidget::ClearData()
     RefreshChart();
 }
 
+void UBarChartWidget::SetChartStyle(const FChartStyle& NewChartStyle)
+{
+    ChartStyle = NewChartStyle;
+    RefreshChart();
+}
+
+void UBarChartWidget::SetBarChartStyle(const FBarChartStyle& NewBarChartStyle)
+{
+    BarChartStyle = NewBarChartStyle;
+    RefreshChart();
+}
+
 void UBarChartWidget::SetBarSpacing(float NewBarSpacing)
 {
-    BarSpacing = FMath::Max(0.0f, NewBarSpacing);
+    BarChartStyle.BarSpacing = FMath::Max(0.0f, NewBarSpacing);
     RefreshChart();
 }
 
 void UBarChartWidget::SetChartPadding(FMargin NewChartPadding)
 {
-    ChartPadding = NewChartPadding;
+    ChartStyle.Padding = NewChartPadding;
     RefreshChart();
 }
 
@@ -63,12 +75,19 @@ void UBarChartWidget::SynchronizeBarChartProperties()
 {
     if (MyBarChart.IsValid())
     {
-        MyBarChart->SetBarSpacing(BarSpacing);
-        MyBarChart->SetChartPadding(ChartPadding);
-        MyBarChart->SetShowLabels(bShowLabels);
-        MyBarChart->SetShowValues(bShowValues);
-        MyBarChart->SetShowYAxis(bShowYAxis);
-        MyBarChart->SetShowGridLines(bShowGridLines);
+        FBarChartStyle ResolvedBarChartStyle = BarChartStyle;
+        ResolvedBarChartStyle.BarSpacing = FMath::Max(0.0f, ResolvedBarChartStyle.BarSpacing);
+        ResolvedBarChartStyle.MinimumBarWidth = FMath::Max(0.0f, ResolvedBarChartStyle.MinimumBarWidth);
+        ResolvedBarChartStyle.MaximumBarWidth = FMath::Max(0.0f, ResolvedBarChartStyle.MaximumBarWidth);
+
+        if (ResolvedBarChartStyle.MaximumBarWidth > 0.0f &&
+            ResolvedBarChartStyle.MinimumBarWidth > ResolvedBarChartStyle.MaximumBarWidth)
+        {
+            Swap(ResolvedBarChartStyle.MinimumBarWidth, ResolvedBarChartStyle.MaximumBarWidth);
+        }
+
+        MyBarChart->SetChartStyle(ChartStyle);
+        MyBarChart->SetBarChartStyle(ResolvedBarChartStyle);
     }
 }
 

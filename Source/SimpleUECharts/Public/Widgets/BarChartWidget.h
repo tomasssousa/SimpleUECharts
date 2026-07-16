@@ -2,6 +2,7 @@
 
 #include "Components/Widget.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartStyles.h"
 #include "BarChartWidget.generated.h"
 
 class SBarChart;
@@ -15,23 +16,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     TArray<FChartDataPoint> Data;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0"))
-    float BarSpacing = 6.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Style")
+    FChartStyle ChartStyle;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    FMargin ChartPadding = FMargin(8.0f);
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLabels = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowValues = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowYAxis = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowGridLines = false;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Style")
+    FBarChartStyle BarChartStyle;
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void SetData(const TArray<FChartDataPoint>& NewData);
@@ -39,10 +28,16 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void ClearData();
 
-    UFUNCTION(BlueprintCallable, Category = "Chart")
+    UFUNCTION(BlueprintCallable, Category = "Style")
+    void SetChartStyle(const FChartStyle& NewChartStyle);
+
+    UFUNCTION(BlueprintCallable, Category = "Style")
+    void SetBarChartStyle(const FBarChartStyle& NewBarChartStyle);
+
+    UFUNCTION(BlueprintCallable, Category = "Style")
     void SetBarSpacing(float NewBarSpacing);
 
-    UFUNCTION(BlueprintCallable, Category = "Chart")
+    UFUNCTION(BlueprintCallable, Category = "Style")
     void SetChartPadding(FMargin NewChartPadding);
 
     UFUNCTION(BlueprintCallable, Category = "Chart")

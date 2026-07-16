@@ -44,6 +44,13 @@ shared chart data contract used by both chart widget families.
   A follow-up fix on July 16, 2026 reapplied the current widget render
   transform to cached pie-chart mesh data so the pie chart scales and fits the
   allotted widget area correctly.
+- Phase 12 bar-chart styling implementation verified in code and host-project
+  build on July 16, 2026: `UBarChartWidget` now exposes reusable `FChartStyle`
+  and `FBarChartStyle` structs, and `SBarChart` renders from those style
+  objects for background, text, padding, spacing, label/value visibility,
+  axis/grid colors, and preferred bar-width limits.
+  The overall phase 12 milestone remains open because the pie chart has not yet
+  been migrated to the same styling system.
 
 ## Key Files
 
@@ -52,6 +59,8 @@ shared chart data contract used by both chart widget families.
 - `Source/SimpleUECharts/` contains the runtime module skeleton.
 - `Source/SimpleUECharts/Public/Data/ChartDataPoint.h` defines the shared data
   model.
+- `Source/SimpleUECharts/Public/Data/ChartStyles.h` defines the reusable chart
+  style structs.
 
 ## Shared Data Model
 
@@ -71,6 +80,33 @@ The same array can be passed to either widget API:
 BarChart->SetData(Data);
 PieChart->SetData(Data);
 ```
+
+## Bar Chart Styling
+
+Phase 12 has now started on the bar-chart side through reusable style structs:
+
+```cpp
+BarChart->ChartStyle.BackgroundColor = FLinearColor(0.04f, 0.04f, 0.06f, 1.0f);
+BarChart->ChartStyle.TextColor = FLinearColor::White;
+BarChart->ChartStyle.Padding = FMargin(16.0f, 12.0f);
+
+BarChart->BarChartStyle.BarSpacing = 12.0f;
+BarChart->BarChartStyle.bShowGridLines = true;
+BarChart->BarChartStyle.AxisColor = FLinearColor(0.8f, 0.8f, 0.8f, 1.0f);
+BarChart->BarChartStyle.GridLineColor = FLinearColor(0.2f, 0.2f, 0.2f, 1.0f);
+
+BarChart->RefreshChart();
+```
+
+The bar chart styling path now covers:
+
+- Background color.
+- Text color and font.
+- Chart padding and label padding.
+- Bar spacing.
+- Preferred minimum and maximum bar widths.
+- Label, value, Y-axis, and grid-line visibility.
+- Axis and grid-line colors.
 
 ## Phase 2 Milestone Check
 
@@ -213,6 +249,28 @@ codebase because:
 - A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
   phase 11 chart-cache refactor compiled into the plugin module.
 
+## Phase 12 Milestone Check
+
+The roadmap milestone "Charts can be styled without changing implementation
+code" is not fully satisfied yet.
+
+The current bar-chart portion is satisfied in the codebase because:
+
+- `FChartStyle` and `FBarChartStyle` are now exposed on `UBarChartWidget`.
+- `UBarChartWidget` synchronizes those reusable style structs directly into
+  `SBarChart`.
+- `SBarChart` now reads background, text, padding, spacing, visibility, axis
+  color, grid-line color, and preferred bar-width limits from the style
+  structs instead of hard-coded rendering defaults.
+- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
+  bar-chart style integration compiled into the plugin module.
+
+The overall phase 12 milestone remains open because:
+
+- `UPieChartWidget` does not yet expose `FChartStyle` and `FPieChartStyle`.
+- `SPieChart` still uses per-property presentation settings rather than the
+  reusable styling contract introduced for the bar chart.
+
 ## Current Focus
 
 The repository is organized for future implementation of:
@@ -220,4 +278,4 @@ The repository is organized for future implementation of:
 - Bar charts
 - Pie charts
 - UMG and Slate integration
-- Shared chart styling
+- Completing the shared styling system for pie charts
