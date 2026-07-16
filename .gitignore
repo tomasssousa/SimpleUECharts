@@ -1,0 +1,17 @@
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+.vs/
+.vscode/
+
+.tmp/
+
+*.VC.db
+*.VC.opendb
+*.sln
+*.suo
+*.user
+*.userprefs

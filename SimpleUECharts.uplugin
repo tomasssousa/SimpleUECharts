@@ -5,7 +5,7 @@
   "FriendlyName": "SimpleUECharts",
   "Description": "Lightweight Unreal Engine charts for UMG and Slate.",
   "Category": "UI",
-  "CreatedBy": "",
+  "CreatedBy": "SimpleUECharts Contributors",
   "CreatedByURL": "",
   "DocsURL": "",
   "MarketplaceURL": "",
@@ -13,6 +13,7 @@
   "CanContainContent": false,
   "IsBetaVersion": true,
   "Installed": false,
+  "EnabledByDefault": true,
   "Modules": [
     {
       "Name": "SimpleUECharts",
