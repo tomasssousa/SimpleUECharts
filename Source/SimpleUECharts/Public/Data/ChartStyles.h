@@ -86,24 +86,35 @@ struct SIMPLEUECHARTS_API FPieChartStyle
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float StartAngle = 0.0f;
+    FPieChartStyle()
+        : StartAngle(0.0f)
+        , SliceSpacing(0.0f)
+        , InnerRadius(0.0f)
+        , bShowLabels(true)
+        , bShowValues(true)
+        , bShowPercentages(true)
+        , bShowLegend(true)
+    {
+    }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float SliceSpacing = 0.0f;
+    float StartAngle;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float InnerRadius = 0.0f;
+    float SliceSpacing;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLabels = true;
+    float InnerRadius;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowValues = true;
+    bool bShowLabels;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowPercentages = true;
+    bool bShowValues;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLegend = false;
+    bool bShowPercentages;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowLegend;
 };

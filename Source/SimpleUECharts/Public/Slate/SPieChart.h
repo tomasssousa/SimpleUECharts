@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartStyles.h"
 #include "Rendering/RenderingCommon.h"
 #include "Widgets/SLeafWidget.h"
 
@@ -15,13 +16,8 @@ public:
 
     void SetData(const TArray<FChartDataPoint>& NewData);
     void ClearData();
-    void SetShowLabels(bool bInShowLabels);
-    void SetShowValues(bool bInShowValues);
-    void SetShowPercentages(bool bInShowPercentages);
-    void SetShowLegend(bool bInShowLegend);
-    void SetStartAngle(float InStartAngleDegrees);
-    void SetSliceSpacing(float InSliceSpacing);
-    void SetInnerRadius(float InInnerRadius);
+    void SetChartStyle(const FChartStyle& InChartStyle);
+    void SetPieChartStyle(const FPieChartStyle& InPieChartStyle);
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -60,17 +56,13 @@ private:
     void ResetCalculatedState();
     void InvalidateCachedLayout();
     void EnsureCachedLayout(const FVector2D& LocalSize) const;
+    FSlateFontInfo GetChartFont() const;
 
     TArray<FChartDataPoint> Data;
     TArray<FPieSlice> CalculatedSlices;
     float TotalValue = 0.0f;
-    float StartAngleDegrees = 0.0f;
-    float SliceSpacing = 0.0f;
-    float InnerRadius = 0.0f;
-    bool bShowLabels = true;
-    bool bShowValues = true;
-    bool bShowPercentages = true;
-    bool bShowLegend = true;
+    FChartStyle ChartStyle;
+    FPieChartStyle PieChartStyle;
     mutable bool bLayoutDirty = true;
     mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);
     mutable TArray<FSlateVertex> CachedVertices;

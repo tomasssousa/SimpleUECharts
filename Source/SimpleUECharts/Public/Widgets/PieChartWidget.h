@@ -2,6 +2,7 @@
 
 #include "Components/Widget.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartStyles.h"
 #include "PieChartWidget.generated.h"
 
 class SPieChart;
@@ -15,32 +16,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     TArray<FChartDataPoint> Data;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLabels = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Style")
+    FChartStyle ChartStyle;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowValues = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowPercentages = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    bool bShowLegend = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
-    float StartAngle = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0"))
-    float SliceSpacing = 0.0f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", ClampMax = "0.95"))
-    float InnerRadius = 0.0f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Style")
+    FPieChartStyle PieChartStyle;
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void SetData(const TArray<FChartDataPoint>& NewData);
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void ClearData();
+
+    UFUNCTION(BlueprintCallable, Category = "Style")
+    void SetChartStyle(const FChartStyle& NewChartStyle);
+
+    UFUNCTION(BlueprintCallable, Category = "Style")
+    void SetPieChartStyle(const FPieChartStyle& NewPieChartStyle);
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void RefreshChart();

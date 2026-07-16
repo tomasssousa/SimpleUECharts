@@ -44,13 +44,15 @@ shared chart data contract used by both chart widget families.
   A follow-up fix on July 16, 2026 reapplied the current widget render
   transform to cached pie-chart mesh data so the pie chart scales and fits the
   allotted widget area correctly.
-- Phase 12 bar-chart styling implementation verified in code and host-project
-  build on July 16, 2026: `UBarChartWidget` now exposes reusable `FChartStyle`
-  and `FBarChartStyle` structs, and `SBarChart` renders from those style
-  objects for background, text, padding, spacing, label/value visibility,
-  axis/grid colors, and preferred bar-width limits.
-  The overall phase 12 milestone remains open because the pie chart has not yet
-  been migrated to the same styling system.
+- Phase 12 styling is now implemented in code for both chart types as of
+  July 16, 2026: `UBarChartWidget` and `UPieChartWidget` expose reusable
+  `FChartStyle`, `FBarChartStyle`, and `FPieChartStyle` structs, while
+  `SBarChart` and `SPieChart` render from those style objects instead of
+  per-property presentation fields.
+  A host-project rebuild attempted on July 16, 2026 reached the final link step
+  and was blocked because `UnrealEditor.exe` was holding
+  `UnrealEditor-SimpleUECharts.dll` open, so manual visual validation is still
+  recommended even though the migrated pie-chart source compiled successfully.
 
 ## Key Files
 
@@ -81,9 +83,9 @@ BarChart->SetData(Data);
 PieChart->SetData(Data);
 ```
 
-## Bar Chart Styling
+## Shared Styling
 
-Phase 12 has now started on the bar-chart side through reusable style structs:
+Phase 12 now uses reusable style structs for both chart types:
 
 ```cpp
 BarChart->ChartStyle.BackgroundColor = FLinearColor(0.04f, 0.04f, 0.06f, 1.0f);
@@ -98,7 +100,20 @@ BarChart->BarChartStyle.GridLineColor = FLinearColor(0.2f, 0.2f, 0.2f, 1.0f);
 BarChart->RefreshChart();
 ```
 
-The bar chart styling path now covers:
+```cpp
+PieChart->ChartStyle.BackgroundColor = FLinearColor(0.06f, 0.06f, 0.08f, 1.0f);
+PieChart->ChartStyle.TextColor = FLinearColor::White;
+PieChart->ChartStyle.Padding = FMargin(14.0f);
+
+PieChart->PieChartStyle.StartAngle = -90.0f;
+PieChart->PieChartStyle.SliceSpacing = 6.0f;
+PieChart->PieChartStyle.InnerRadius = 0.45f;
+PieChart->PieChartStyle.bShowLegend = true;
+
+PieChart->RefreshChart();
+```
+
+The shared styling path now covers:
 
 - Background color.
 - Text color and font.
@@ -107,6 +122,8 @@ The bar chart styling path now covers:
 - Preferred minimum and maximum bar widths.
 - Label, value, Y-axis, and grid-line visibility.
 - Axis and grid-line colors.
+- Pie start angle, slice spacing, inner radius, and legend/value/percentage
+  visibility.
 
 ## Phase 2 Milestone Check
 
@@ -152,16 +169,17 @@ is satisfied in the codebase because:
 - Bar Y positions are derived from the normalized height, so bars grow upward
   from the bottom of the chart area.
 - `FChartDataPoint::Color` still drives per-bar color.
-- `UBarChartWidget` exposes `BarSpacing` and `ChartPadding`, and synchronizes
-  both into `SBarChart`.
+- `UBarChartWidget` now exposes `FChartStyle` and `FBarChartStyle`, and
+  synchronizes spacing and padding from those reusable style structs into
+  `SBarChart`.
 
 ## Phase 6 Milestone Check
 
 The milestone "The bar chart is usable in a real application UI" is satisfied
 in the codebase because:
 
-- `UBarChartWidget` now exposes `bShowLabels`, `bShowValues`, `bShowYAxis`, and
-  `bShowGridLines`.
+- `UBarChartWidget` now exposes `FBarChartStyle`, including label, value,
+  Y-axis, and grid-line presentation toggles.
 - `SBarChart` can draw Y-axis lines and tick labels.
 - `SBarChart` can draw optional horizontal grid lines across the plot area.
 - `SBarChart` can draw per-bar labels and per-bar values in addition to the
@@ -214,15 +232,15 @@ satisfied in the codebase because:
 The milestone "The pie chart is ready for real application use" is satisfied
 in the codebase because:
 
-- `UPieChartWidget` now exposes `bShowLabels`, `bShowValues`,
-  `bShowPercentages`, `bShowLegend`, `StartAngle`, `SliceSpacing`, and
-  `InnerRadius`, then synchronizes them into `SPieChart`.
-- `SPieChart` can rotate the chart with `StartAngle` before slice layout is
-  cached, instead of baking a fixed zero-angle start into the widget.
-- `SPieChart` applies `SliceSpacing` during rendering to introduce visible gaps
-  between adjacent slices.
-- `SPieChart` supports `InnerRadius > 0`, which turns the chart into a donut
-  layout while preserving the same shared data model.
+- `UPieChartWidget` now exposes `FPieChartStyle`, then synchronizes that
+  reusable pie presentation configuration into `SPieChart`.
+- `SPieChart` can rotate the chart with `FPieChartStyle::StartAngle` before
+  slice layout is cached, instead of baking a fixed zero-angle start into the
+  widget.
+- `SPieChart` applies `FPieChartStyle::SliceSpacing` during rendering to
+  introduce visible gaps between adjacent slices.
+- `SPieChart` supports `FPieChartStyle::InnerRadius > 0`, which turns the chart
+  into a donut layout while preserving the same shared data model.
 - `SPieChart` can render a side legend alongside the pie geometry, showing the
   slice color, label, and optional value/percentage text without changing the
   dataset contract.
@@ -252,24 +270,25 @@ codebase because:
 ## Phase 12 Milestone Check
 
 The roadmap milestone "Charts can be styled without changing implementation
-code" is not fully satisfied yet.
-
-The current bar-chart portion is satisfied in the codebase because:
+code" is satisfied in the codebase because:
 
 - `FChartStyle` and `FBarChartStyle` are now exposed on `UBarChartWidget`.
+- `FChartStyle` and `FPieChartStyle` are now exposed on `UPieChartWidget`.
 - `UBarChartWidget` synchronizes those reusable style structs directly into
   `SBarChart`.
+- `UPieChartWidget` synchronizes those reusable style structs directly into
+  `SPieChart`.
 - `SBarChart` now reads background, text, padding, spacing, visibility, axis
   color, grid-line color, and preferred bar-width limits from the style
   structs instead of hard-coded rendering defaults.
-- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
-  bar-chart style integration compiled into the plugin module.
-
-The overall phase 12 milestone remains open because:
-
-- `UPieChartWidget` does not yet expose `FChartStyle` and `FPieChartStyle`.
-- `SPieChart` still uses per-property presentation settings rather than the
-  reusable styling contract introduced for the bar chart.
+- `SPieChart` now reads background, text, font, padding, legend layout, start
+  angle, slice spacing, inner radius, and visibility toggles from style
+  structs instead of per-property presentation fields.
+- A host-project `GoTwinAppEditor` rebuild attempted on July 16, 2026 compiled
+  the migrated pie-chart source files successfully and then stopped at the
+  final link step because `UnrealEditor.exe` had the plugin DLL locked.
+- Manual editor/runtime validation remains recommended for the visual results,
+  but the implementation-side roadmap milestone is now complete.
 
 ## Current Focus
 
@@ -278,4 +297,4 @@ The repository is organized for future implementation of:
 - Bar charts
 - Pie charts
 - UMG and Slate integration
-- Completing the shared styling system for pie charts
+- Testing, example coverage, and release hardening

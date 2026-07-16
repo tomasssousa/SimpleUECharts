@@ -17,6 +17,18 @@ void UPieChartWidget::ClearData()
     RefreshChart();
 }
 
+void UPieChartWidget::SetChartStyle(const FChartStyle& NewChartStyle)
+{
+    ChartStyle = NewChartStyle;
+    RefreshChart();
+}
+
+void UPieChartWidget::SetPieChartStyle(const FPieChartStyle& NewPieChartStyle)
+{
+    PieChartStyle = NewPieChartStyle;
+    RefreshChart();
+}
+
 void UPieChartWidget::RefreshChart()
 {
     if (MyPieChart.IsValid())
@@ -51,13 +63,12 @@ void UPieChartWidget::SynchronizePieChartProperties()
 {
     if (MyPieChart.IsValid())
     {
-        MyPieChart->SetShowLabels(bShowLabels);
-        MyPieChart->SetShowValues(bShowValues);
-        MyPieChart->SetShowPercentages(bShowPercentages);
-        MyPieChart->SetShowLegend(bShowLegend);
-        MyPieChart->SetStartAngle(StartAngle);
-        MyPieChart->SetSliceSpacing(SliceSpacing);
-        MyPieChart->SetInnerRadius(InnerRadius);
+        FPieChartStyle ResolvedPieChartStyle = PieChartStyle;
+        ResolvedPieChartStyle.SliceSpacing = FMath::Max(0.0f, ResolvedPieChartStyle.SliceSpacing);
+        ResolvedPieChartStyle.InnerRadius = FMath::Clamp(ResolvedPieChartStyle.InnerRadius, 0.0f, 0.95f);
+
+        MyPieChart->SetChartStyle(ChartStyle);
+        MyPieChart->SetPieChartStyle(ResolvedPieChartStyle);
     }
 }
 

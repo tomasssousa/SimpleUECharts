@@ -79,3 +79,15 @@ All notable changes to this project will be documented in this file.
 - Documented that the bar-chart portion of phase 12 is complete while the
   overall roadmap milestone remains open until the pie chart adopts the same
   styling system.
+- Integrated the phase 12 pie-chart styling path so `UPieChartWidget` now
+  exposes reusable `FChartStyle` and `FPieChartStyle` properties instead of
+  separate pie-chart presentation fields.
+- Updated `SPieChart` to render from reusable style structs for background,
+  text, font, padding, legend layout, start angle, slice spacing, inner
+  radius, and legend/value/percentage visibility.
+- Documented that phase 12 is now complete in the codebase for both chart
+  types.
+- Attempted to verify the pie-chart styling integration on July 16, 2026 by
+  rebuilding `GoTwinAppEditor`; the pie-chart source compiled successfully, but
+  the final link step was blocked because `UnrealEditor.exe` had
+  `UnrealEditor-SimpleUECharts.dll` open.
