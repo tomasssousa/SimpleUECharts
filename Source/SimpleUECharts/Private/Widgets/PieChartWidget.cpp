@@ -3,6 +3,8 @@
 #include "Slate/SPieChart.h"
 #include "Widgets/SNullWidget.h"
 
+#define LOCTEXT_NAMESPACE "SimpleUECharts"
+
 void UPieChartWidget::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
@@ -42,3 +44,12 @@ void UPieChartWidget::ReleaseSlateResources(bool bReleaseChildren)
     Super::ReleaseSlateResources(bReleaseChildren);
     MyPieChart.Reset();
 }
+
+#if WITH_EDITOR
+const FText UPieChartWidget::GetPaletteCategory()
+{
+    return LOCTEXT("PaletteCategory", "Simple UE Charts");
+}
+#endif
+
+#undef LOCTEXT_NAMESPACE

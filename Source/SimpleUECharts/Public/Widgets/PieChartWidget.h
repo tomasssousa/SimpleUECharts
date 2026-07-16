@@ -29,6 +29,10 @@ protected:
     virtual void SynchronizeProperties() override;
     virtual void ReleaseSlateResources(bool bReleaseChildren) override;
 
+#if WITH_EDITOR
+    virtual const FText GetPaletteCategory() override;
+#endif
+
 private:
     TSharedPtr<SPieChart> MyPieChart;
 };
