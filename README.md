@@ -15,6 +15,9 @@ shared chart data contract used by both chart widget families.
 - Phase 3 milestone verified in code: `UBarChartWidget` is a concrete `UWidget`
   with editor-visible display metadata, Blueprint API, Slate synchronization,
   and an explicit UMG palette category.
+- Phase 4 milestone verified in code: `SBarChart` now renders one rectangle per
+  data point in `OnPaint()`, establishing the first visible native Slate output
+  for bar charts.
 
 ## Key Files
 
@@ -65,6 +68,17 @@ the codebase because:
 - `SynchronizeProperties()` forwards the current `Data` array to Slate.
 - `GetPaletteCategory()` places the widget under `Simple UE Charts` in the UMG
   palette when viewed in the editor.
+
+## Phase 4 Milestone Check
+
+The milestone "The Slate widget can render one or more bars" is satisfied in
+the codebase because:
+
+- `SBarChart::OnPaint()` now exits early only for empty data or invalid space.
+- A valid `Data` array produces one `MakeBox()` draw call per item.
+- Each bar uses the corresponding `FChartDataPoint::Color`.
+- The implementation stays intentionally minimal and does not yet claim the
+  automatic scaling work planned for Phase 5.
 
 ## Current Focus
 
