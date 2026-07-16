@@ -1,72 +1,186 @@
 # SimpleUECharts
 
-Lightweight Unreal Engine charts for UMG and Slate.
+`SimpleUECharts` is a lightweight Unreal Engine runtime plugin for building
+native chart widgets with UMG and Slate.
 
-## Repository Status
+Its goal is to make common UI charts easy to add to an Unreal project without
+introducing external charting libraries, editor-only systems, or per-frame
+recalculation for ordinary updates. The plugin keeps the workflow simple:
 
-This repository now has the runtime plugin/module skeleton in place plus the
-shared chart data contract used by both chart widget families.
+```cpp
+Chart->SetData(Data);
+```
 
-## Current Progress
+The current implementation focuses on reusable bar-chart and pie-chart widgets
+that can be updated from gameplay code, C++ UI code, or Blueprint.
 
-- Phase 1 milestone verified: the plugin is configured as a Runtime plugin.
-- Phase 2 milestone verified in code: `FChartDataPoint` is exposed to C++ and
-  Blueprint and both chart widgets accept `TArray<FChartDataPoint>`.
-- Phase 3 milestone verified in code: `UBarChartWidget` is a concrete `UWidget`
-  with editor-visible display metadata, Blueprint API, Slate synchronization,
-  and an explicit UMG palette category.
-- Phase 4 milestone verified in code: `SBarChart` now renders one rectangle per
-  data point in `OnPaint()`, establishing the first visible native Slate output
-  for bar charts.
-- Phase 5 milestone verified in code: bar heights now scale from
-  `FChartDataPoint::Value`, while `BarSpacing` and `ChartPadding` are
-  configurable from the UMG wrapper.
-- Phase 6 milestone verified in code: labels, values, Y axis, and optional grid
-  lines are now available for the bar chart presentation layer.
-- Phase 7 milestone verified in code: `UPieChartWidget` is exposed as a UMG
-  widget with shared chart data input, Blueprint API, Slate synchronization,
-  and an explicit UMG palette category.
-- Phase 8 milestone verified in code and host-project build on July 16, 2026:
-  `SPieChart` now prepares validated pie-slice percentages and accumulated
-  angles from shared chart data, ready for rendering in the next phase.
-- Phase 9 milestone verified in code and host-project build on July 16, 2026:
-  `SPieChart` now triangulates and renders complete multi-slice pie geometry in
-  native Slate from the prepared slice-angle state.
-- Phase 10 milestone verified in code and host-project build on July 16, 2026:
-  the pie chart now supports presentation controls for labels, values,
-  percentages, legend, start angle, slice spacing, and donut-style inner
-  radius.
-  The current presentation emphasis is a side legend layout rather than
-  overlaying text directly on the slices.
-- Phase 11 milestone verified in code and host-project build on July 16, 2026:
-  both chart types now separate data preparation from rendering, with cached
-  chart state and cached size-dependent layout reused by `OnPaint()`.
-  A follow-up fix on July 16, 2026 reapplied the current widget render
-  transform to cached pie-chart mesh data so the pie chart scales and fits the
-  allotted widget area correctly.
-- Phase 12 styling is now implemented in code for both chart types as of
-  July 16, 2026: `UBarChartWidget` and `UPieChartWidget` expose reusable
-  `FChartStyle`, `FBarChartStyle`, and `FPieChartStyle` structs, while
-  `SBarChart` and `SPieChart` render from those style objects instead of
-  per-property presentation fields.
-  A host-project rebuild attempted on July 16, 2026 reached the final link step
-  and was blocked because `UnrealEditor.exe` was holding
-  `UnrealEditor-SimpleUECharts.dll` open, so manual visual validation is still
-  recommended even though the migrated pie-chart source compiled successfully.
+## Target Language And Unreal Version
 
-## Key Files
+This plugin is primarily intended for Unreal Engine C++ projects.
 
-- `docs/ROADMAP.md` contains the full development plan.
-- `SimpleUECharts.uplugin` defines the Unreal Engine plugin.
-- `Source/SimpleUECharts/` contains the runtime module skeleton.
-- `Source/SimpleUECharts/Public/Data/ChartDataPoint.h` defines the shared data
-  model.
-- `Source/SimpleUECharts/Public/Data/ChartStyles.h` defines the reusable chart
-  style structs.
+- Language: C++
+- Unreal UI stack: UMG + Slate
+- Blueprint support: yes, through `BlueprintCallable` APIs and `BlueprintType`
+  data/style structs
+- Current implementation target: Unreal Engine 5.5
 
-## Shared Data Model
+The module is configured as a Runtime plugin, so it is intended to work inside
+regular game/application builds rather than only inside the editor.
 
-`FChartDataPoint` is the reusable dataset item shared by bar and pie charts.
+## Features
+
+The plugin currently provides:
+
+- Native `UWidget` wrappers for bar charts and pie charts
+- Native Slate rendering through `SBarChart` and `SPieChart`
+- Shared chart data model through `FChartDataPoint`
+- Shared styling model through `FChartStyle`, `FBarChartStyle`, and
+  `FPieChartStyle`
+- C++ and Blueprint data updates through `SetData`, `ClearData`, and
+  `RefreshChart`
+- Automatic bar-chart value scaling
+- Per-data-point colors
+- Bar-chart labels, values, Y axis, and optional grid lines
+- Pie-chart slice angle calculation and native Slate mesh rendering
+- Pie-chart legend, value display, percentage display, start angle, slice
+  spacing, and donut-style inner radius
+- Separation between chart calculation and chart rendering, with cached
+  prepared state reused by `OnPaint()`
+
+## Repository Structure
+
+The repository is organized around a single runtime plugin module:
+
+```text
+SimpleUECharts/
+|
++-- SimpleUECharts.uplugin
++-- README.md
++-- CHANGELOG.md
++-- docs/
+|   +-- ROADMAP.md
++-- Source/
+|   +-- SimpleUECharts/
+|       +-- SimpleUECharts.Build.cs
+|       +-- Public/
+|       |   +-- Data/
+|       |   |   +-- ChartDataPoint.h
+|       |   |   +-- ChartStyles.h
+|       |   +-- Widgets/
+|       |   |   +-- BarChartWidget.h
+|       |   |   +-- PieChartWidget.h
+|       |   +-- Slate/
+|       |       +-- SBarChart.h
+|       |       +-- SPieChart.h
+|       +-- Private/
+|           +-- SimpleUECharts.cpp
+|           +-- Widgets/
+|           |   +-- BarChartWidget.cpp
+|           |   +-- PieChartWidget.cpp
+|           +-- Slate/
+|               +-- SBarChart.cpp
+|               +-- SPieChart.cpp
+```
+
+### What Each Part Does
+
+- `SimpleUECharts.uplugin`
+  Declares the plugin, its metadata, and the runtime module entry.
+
+- `docs/ROADMAP.md`
+  Defines the intended architecture, feature order, and long-term scope.
+
+- `Source/SimpleUECharts/SimpleUECharts.Build.cs`
+  Declares the module dependencies. The current runtime module depends on
+  `Core`, `CoreUObject`, `Engine`, `Slate`, `SlateCore`, and `UMG`.
+
+- `Public/Data/ChartDataPoint.h`
+  Defines `FChartDataPoint`, the shared dataset item used by both chart types.
+
+- `Public/Data/ChartStyles.h`
+  Defines the reusable chart style structs shared by the UMG and Slate layers.
+
+- `Public/Widgets/*`
+  Declares the UMG-facing widget classes. These are the classes users interact
+  with from C++ and Blueprint.
+
+- `Private/Widgets/*`
+  Implements the UMG widget behavior, including `RebuildWidget()`,
+  property synchronization, and chart refresh APIs.
+
+- `Public/Slate/*`
+  Declares the lower-level Slate widgets responsible for layout and drawing.
+
+- `Private/Slate/*`
+  Implements the Slate rendering, chart calculations, cached layout, and
+  `OnPaint()` logic.
+
+## Installation
+
+There are two common ways to add the plugin to a project.
+
+### Option 1: Install As A Project Plugin
+
+1. Copy the `SimpleUECharts` folder into your project's `Plugins/` directory.
+2. Your project structure should look like this:
+
+```text
+MyProject/
+|
++-- Plugins/
+|   +-- SimpleUECharts/
+|       +-- SimpleUECharts.uplugin
++-- Source/
++-- Content/
+```
+
+3. Open the Unreal project.
+4. If prompted, rebuild the project modules.
+5. In the Unreal Editor, open `Edit -> Plugins` and confirm that
+   `SimpleUECharts` is enabled.
+
+### Option 2: Install As An Engine Plugin
+
+1. Copy the `SimpleUECharts` folder into your Unreal Engine installation's
+   `Engine/Plugins/` directory.
+2. Open your project.
+3. Enable the plugin from `Edit -> Plugins` if needed.
+
+For most teams, the project-plugin approach is easier to version and share.
+
+## Adding The Plugin To A C++ Project
+
+If your project uses C++, make sure the plugin is enabled in the `.uproject`
+file or in the Plugins UI, then regenerate project files if Unreal asks for it.
+
+You can then include the widget headers where needed:
+
+```cpp
+#include "Widgets/BarChartWidget.h"
+#include "Widgets/PieChartWidget.h"
+#include "Data/ChartDataPoint.h"
+#include "Data/ChartStyles.h"
+```
+
+## How To Use The Plugin
+
+The plugin is designed to be used in either UMG Designer, Blueprint, or C++.
+
+### 1. Add A Widget In UMG
+
+If the plugin is enabled, `Bar Chart` and `Pie Chart` should appear in the UMG
+palette under `Simple UE Charts`.
+
+You can drag either widget into a `Widget Blueprint` and then configure:
+
+- `Data`
+- `ChartStyle`
+- `BarChartStyle` for bar charts
+- `PieChartStyle` for pie charts
+
+### 2. Prepare Chart Data
+
+Both charts use the same shared data structure:
 
 ```cpp
 TArray<FChartDataPoint> Data = {
@@ -76,16 +190,57 @@ TArray<FChartDataPoint> Data = {
 };
 ```
 
-The same array can be passed to either widget API:
+### 3. Update A Chart From C++
+
+Example with a bound bar chart:
 
 ```cpp
-BarChart->SetData(Data);
-PieChart->SetData(Data);
+UPROPERTY(meta = (BindWidget))
+UBarChartWidget* BarChart;
+
+void UMyWidget::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    if (BarChart)
+    {
+        TArray<FChartDataPoint> Data = {
+            FChartDataPoint(FText::FromString(TEXT("Jan")), 20.0f, FLinearColor::Red),
+            FChartDataPoint(FText::FromString(TEXT("Feb")), 50.0f, FLinearColor::Green),
+            FChartDataPoint(FText::FromString(TEXT("Mar")), 100.0f, FLinearColor::Blue)
+        };
+
+        BarChart->SetData(Data);
+    }
+}
 ```
 
-## Shared Styling
+Example with a bound pie chart:
 
-Phase 12 now uses reusable style structs for both chart types:
+```cpp
+UPROPERTY(meta = (BindWidget))
+UPieChartWidget* PieChart;
+
+void UMyWidget::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    if (PieChart)
+    {
+        TArray<FChartDataPoint> Data = {
+            FChartDataPoint(FText::FromString(TEXT("A")), 50.0f, FLinearColor::Red),
+            FChartDataPoint(FText::FromString(TEXT("B")), 30.0f, FLinearColor::Green),
+            FChartDataPoint(FText::FromString(TEXT("C")), 20.0f, FLinearColor::Blue)
+        };
+
+        PieChart->SetData(Data);
+    }
+}
+```
+
+### 4. Style A Chart
+
+Bar-chart styling example:
 
 ```cpp
 BarChart->ChartStyle.BackgroundColor = FLinearColor(0.04f, 0.04f, 0.06f, 1.0f);
@@ -100,6 +255,8 @@ BarChart->BarChartStyle.GridLineColor = FLinearColor(0.2f, 0.2f, 0.2f, 1.0f);
 BarChart->RefreshChart();
 ```
 
+Pie-chart styling example:
+
 ```cpp
 PieChart->ChartStyle.BackgroundColor = FLinearColor(0.06f, 0.06f, 0.08f, 1.0f);
 PieChart->ChartStyle.TextColor = FLinearColor::White;
@@ -113,188 +270,38 @@ PieChart->PieChartStyle.bShowLegend = true;
 PieChart->RefreshChart();
 ```
 
-The shared styling path now covers:
+### 5. Update A Chart From Blueprint
 
-- Background color.
-- Text color and font.
-- Chart padding and label padding.
-- Bar spacing.
-- Preferred minimum and maximum bar widths.
-- Label, value, Y-axis, and grid-line visibility.
-- Axis and grid-line colors.
-- Pie start angle, slice spacing, inner radius, and legend/value/percentage
-  visibility.
+The plugin also supports Blueprint workflows:
 
-## Phase 2 Milestone Check
+1. Add a `Bar Chart` or `Pie Chart` widget to your UMG widget.
+2. Store a reference to it.
+3. Build an array of `Chart Data Point` values.
+4. Call `SetData`.
+5. Optionally adjust `ChartStyle`, `BarChartStyle`, or `PieChartStyle`.
+6. Call `RefreshChart` if you changed style values after creation.
 
-The milestone "The plugin can receive a reusable array of chart data points"
-is satisfied by the current codebase because:
+## Current Scope
 
-- `FChartDataPoint` is a `USTRUCT(BlueprintType)`.
-- `UBarChartWidget` stores and accepts `TArray<FChartDataPoint>`.
-- `UPieChartWidget` stores and accepts `TArray<FChartDataPoint>`.
-- `SBarChart` and `SPieChart` receive the same shared array type from the UMG
-  layer.
+The current chart types are:
 
-## Phase 3 Milestone Check
+- `UBarChartWidget` / `SBarChart`
+- `UPieChartWidget` / `SPieChart`
 
-The milestone "`Bar Chart` appears in the UMG Widget Palette" is satisfied in
-the codebase because:
+The plugin deliberately stays focused on a small Unreal-native feature set.
 
-- `UBarChartWidget` is a non-abstract `UWidget` with `DisplayName = "Bar Chart"`.
-- The widget exposes `Data`, `SetData`, `ClearData`, and `RefreshChart`.
-- `RebuildWidget()` creates the underlying `SBarChart`.
-- `SynchronizeProperties()` forwards the current `Data` array to Slate.
-- `GetPaletteCategory()` places the widget under `Simple UE Charts` in the UMG
-  palette when viewed in the editor.
+Out of scope for the current version:
 
-## Phase 4 Milestone Check
+- External charting libraries
+- Python rendering paths
+- Additional chart families beyond bar and pie
+- Complex editor tooling
+- Real-time per-frame chart recomputation by default
 
-The milestone "The Slate widget can render one or more bars" is satisfied in
-the codebase because:
+## Notes
 
-- `SBarChart::OnPaint()` now exits early only for empty data or invalid space.
-- A valid `Data` array produces one `MakeBox()` draw call per item.
-- Each bar uses the corresponding `FChartDataPoint::Color`.
-- The implementation stays intentionally minimal and does not yet claim the
-  automatic scaling work planned for Phase 5.
-
-## Phase 5 Milestone Check
-
-The milestone "A valid dataset produces a correctly scaled vertical bar chart"
-is satisfied in the codebase because:
-
-- `SBarChart::OnPaint()` now finds the maximum `Value` across the dataset.
-- Each bar height is normalized against that maximum before drawing.
-- Bar Y positions are derived from the normalized height, so bars grow upward
-  from the bottom of the chart area.
-- `FChartDataPoint::Color` still drives per-bar color.
-- `UBarChartWidget` now exposes `FChartStyle` and `FBarChartStyle`, and
-  synchronizes spacing and padding from those reusable style structs into
-  `SBarChart`.
-
-## Phase 6 Milestone Check
-
-The milestone "The bar chart is usable in a real application UI" is satisfied
-in the codebase because:
-
-- `UBarChartWidget` now exposes `FBarChartStyle`, including label, value,
-  Y-axis, and grid-line presentation toggles.
-- `SBarChart` can draw Y-axis lines and tick labels.
-- `SBarChart` can draw optional horizontal grid lines across the plot area.
-- `SBarChart` can draw per-bar labels and per-bar values in addition to the
-  scaled bar geometry.
-
-## Phase 7 Milestone Check
-
-The milestone "`Pie Chart` appears in the UMG Widget Palette and can receive
-data" is satisfied in the codebase because:
-
-- `UPieChartWidget` is a non-abstract `UWidget` with `DisplayName = "Pie Chart"`.
-- The widget exposes `Data`, `SetData`, `ClearData`, and `RefreshChart`.
-- `RebuildWidget()` creates the underlying `SPieChart`.
-- `SynchronizeProperties()` forwards the current shared data array to Slate.
-- `GetPaletteCategory()` places the widget under `Simple UE Charts` in the UMG
-  palette when viewed in the editor.
-
-## Phase 8 Milestone Check
-
-The milestone "The plugin correctly calculates all pie slice angles" is
-satisfied in the codebase because:
-
-- `SPieChart::RecalculateChart()` sums only positive values into `TotalValue`.
-- Each valid slice stores its `Percentage`, `StartAngleRadians`,
-  `EndAngleRadians`, and `SweepAngleRadians` in prepared state.
-- Non-positive values are excluded from slice generation, preventing invalid
-  proportions and divide-by-zero paths for the phase 8 scope.
-- The final slice is clamped to end exactly at `2 * PI`, reducing accumulated
-  floating-point drift before rendering.
-- The current implementation keeps calculation separate from `OnPaint()`, so
-  phase 9 can render directly from prepared pie-slice geometry inputs.
-
-## Phase 9 Milestone Check
-
-The milestone "The plugin renders a complete multi-slice pie chart" is
-satisfied in the codebase because:
-
-- `SPieChart::OnPaint()` now exits only for empty slice state or invalid draw
-  space, instead of being a placeholder.
-- Each prepared slice is triangulated into custom Slate vertices and indices.
-- Slice geometry is submitted through `FSlateDrawElement::MakeCustomVerts()`,
-  which is the native Slate path for non-rectangular mesh rendering.
-- The final segment of each slice is clamped to the exact stored end angle,
-  helping the full circle close cleanly without visible drift between slices.
-- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
-  pie-slice rendering implementation compiled into the plugin module.
-
-## Phase 10 Milestone Check
-
-The milestone "The pie chart is ready for real application use" is satisfied
-in the codebase because:
-
-- `UPieChartWidget` now exposes `FPieChartStyle`, then synchronizes that
-  reusable pie presentation configuration into `SPieChart`.
-- `SPieChart` can rotate the chart with `FPieChartStyle::StartAngle` before
-  slice layout is cached, instead of baking a fixed zero-angle start into the
-  widget.
-- `SPieChart` applies `FPieChartStyle::SliceSpacing` during rendering to
-  introduce visible gaps between adjacent slices.
-- `SPieChart` supports `FPieChartStyle::InnerRadius > 0`, which turns the chart
-  into a donut layout while preserving the same shared data model.
-- `SPieChart` can render a side legend alongside the pie geometry, showing the
-  slice color, label, and optional value/percentage text without changing the
-  dataset contract.
-- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
-  full phase 10 pie-chart presentation feature set compiled into the plugin
-  module.
-
-## Phase 11 Milestone Check
-
-The milestone "Separate calculation from rendering" is satisfied in the
-codebase because:
-
-- `SBarChart` now prepares normalized bar data outside `OnPaint()`, then caches
-  size-dependent bar/tick layout separately before drawing from that prepared
-  state.
-- `SPieChart` continues to cache slice-angle data outside `OnPaint()`, and now
-  also caches size-dependent mesh and legend layout before rendering.
-- Property setters such as spacing, padding, legend toggles, and start angle
-  now invalidate cached layout or chart state instead of relying on `OnPaint()`
-  to recompute everything from scratch.
-- `OnPaint()` in both chart widgets is now primarily responsible for drawing
-  cached geometry/text rather than re-deriving the full chart model every
-  repaint.
-- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
-  phase 11 chart-cache refactor compiled into the plugin module.
-
-## Phase 12 Milestone Check
-
-The roadmap milestone "Charts can be styled without changing implementation
-code" is satisfied in the codebase because:
-
-- `FChartStyle` and `FBarChartStyle` are now exposed on `UBarChartWidget`.
-- `FChartStyle` and `FPieChartStyle` are now exposed on `UPieChartWidget`.
-- `UBarChartWidget` synchronizes those reusable style structs directly into
-  `SBarChart`.
-- `UPieChartWidget` synchronizes those reusable style structs directly into
-  `SPieChart`.
-- `SBarChart` now reads background, text, padding, spacing, visibility, axis
-  color, grid-line color, and preferred bar-width limits from the style
-  structs instead of hard-coded rendering defaults.
-- `SPieChart` now reads background, text, font, padding, legend layout, start
-  angle, slice spacing, inner radius, and visibility toggles from style
-  structs instead of per-property presentation fields.
-- A host-project `GoTwinAppEditor` rebuild attempted on July 16, 2026 compiled
-  the migrated pie-chart source files successfully and then stopped at the
-  final link step because `UnrealEditor.exe` had the plugin DLL locked.
-- Manual editor/runtime validation remains recommended for the visual results,
-  but the implementation-side roadmap milestone is now complete.
-
-## Current Focus
-
-The repository is organized for future implementation of:
-
-- Bar charts
-- Pie charts
-- UMG and Slate integration
-- Testing, example coverage, and release hardening
+- The plugin uses native Slate drawing, including custom Slate vertices for pie
+  slices.
+- The intended update model is event-driven rather than tick-driven.
+- The project roadmap and planned milestones are documented in
+  `docs/ROADMAP.md`.
