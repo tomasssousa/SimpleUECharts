@@ -32,6 +32,12 @@ shared chart data contract used by both chart widget families.
 - Phase 9 milestone verified in code and host-project build on July 16, 2026:
   `SPieChart` now triangulates and renders complete multi-slice pie geometry in
   native Slate from the prepared slice-angle state.
+- Phase 10 milestone verified in code and host-project build on July 16, 2026:
+  the pie chart now supports presentation controls for labels, values,
+  percentages, legend, start angle, slice spacing, and donut-style inner
+  radius.
+  The current presentation emphasis is a side legend layout rather than
+  overlaying text directly on the slices.
 
 ## Key Files
 
@@ -161,6 +167,27 @@ satisfied in the codebase because:
 - A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
   pie-slice rendering implementation compiled into the plugin module.
 
+## Phase 10 Milestone Check
+
+The milestone "The pie chart is ready for real application use" is satisfied
+in the codebase because:
+
+- `UPieChartWidget` now exposes `bShowLabels`, `bShowValues`,
+  `bShowPercentages`, `bShowLegend`, `StartAngle`, `SliceSpacing`, and
+  `InnerRadius`, then synchronizes them into `SPieChart`.
+- `SPieChart` can rotate the chart with `StartAngle` before slice layout is
+  cached, instead of baking a fixed zero-angle start into the widget.
+- `SPieChart` applies `SliceSpacing` during rendering to introduce visible gaps
+  between adjacent slices.
+- `SPieChart` supports `InnerRadius > 0`, which turns the chart into a donut
+  layout while preserving the same shared data model.
+- `SPieChart` can render a side legend alongside the pie geometry, showing the
+  slice color, label, and optional value/percentage text without changing the
+  dataset contract.
+- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
+  full phase 10 pie-chart presentation feature set compiled into the plugin
+  module.
+
 ## Current Focus
 
 The repository is organized for future implementation of:
@@ -168,4 +195,4 @@ The repository is organized for future implementation of:
 - Bar charts
 - Pie charts
 - UMG and Slate integration
-- Pie chart presentation features
+- Shared chart styling and calculation cleanup

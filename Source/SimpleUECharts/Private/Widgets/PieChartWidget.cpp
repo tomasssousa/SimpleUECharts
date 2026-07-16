@@ -21,6 +21,7 @@ void UPieChartWidget::RefreshChart()
 {
     if (MyPieChart.IsValid())
     {
+        SynchronizePieChartProperties();
         MyPieChart->SetData(Data);
     }
 }
@@ -28,6 +29,7 @@ void UPieChartWidget::RefreshChart()
 TSharedRef<SWidget> UPieChartWidget::RebuildWidget()
 {
     SAssignNew(MyPieChart, SPieChart);
+    SynchronizePieChartProperties();
     MyPieChart->SetData(Data);
 
     return MyPieChart.IsValid() ? MyPieChart.ToSharedRef() : SNullWidget::NullWidget;
@@ -43,6 +45,20 @@ void UPieChartWidget::ReleaseSlateResources(bool bReleaseChildren)
 {
     Super::ReleaseSlateResources(bReleaseChildren);
     MyPieChart.Reset();
+}
+
+void UPieChartWidget::SynchronizePieChartProperties()
+{
+    if (MyPieChart.IsValid())
+    {
+        MyPieChart->SetShowLabels(bShowLabels);
+        MyPieChart->SetShowValues(bShowValues);
+        MyPieChart->SetShowPercentages(bShowPercentages);
+        MyPieChart->SetShowLegend(bShowLegend);
+        MyPieChart->SetStartAngle(StartAngle);
+        MyPieChart->SetSliceSpacing(SliceSpacing);
+        MyPieChart->SetInnerRadius(InnerRadius);
+    }
 }
 
 #if WITH_EDITOR

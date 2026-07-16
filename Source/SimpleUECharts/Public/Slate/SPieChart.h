@@ -14,6 +14,13 @@ public:
 
     void SetData(const TArray<FChartDataPoint>& NewData);
     void ClearData();
+    void SetShowLabels(bool bInShowLabels);
+    void SetShowValues(bool bInShowValues);
+    void SetShowPercentages(bool bInShowPercentages);
+    void SetShowLegend(bool bInShowLegend);
+    void SetStartAngle(float InStartAngleDegrees);
+    void SetSliceSpacing(float InSliceSpacing);
+    void SetInnerRadius(float InInnerRadius);
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -44,4 +51,11 @@ private:
     TArray<FChartDataPoint> Data;
     TArray<FPieSlice> CalculatedSlices;
     float TotalValue = 0.0f;
+    float StartAngleDegrees = 0.0f;
+    float SliceSpacing = 0.0f;
+    float InnerRadius = 0.0f;
+    bool bShowLabels = true;
+    bool bShowValues = true;
+    bool bShowPercentages = true;
+    bool bShowLegend = true;
 };
