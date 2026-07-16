@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/ChartDataPoint.h"
+#include "Rendering/RenderingCommon.h"
 #include "Widgets/SLeafWidget.h"
 
 class SIMPLEUECHARTS_API SPieChart : public SLeafWidget
@@ -45,8 +46,20 @@ private:
         FLinearColor Color = FLinearColor::White;
     };
 
+    struct FCachedLegendEntry
+    {
+        FLinearColor Color = FLinearColor::White;
+        FString LabelText;
+        FString ValueText;
+        FVector2D SwatchPosition = FVector2D::ZeroVector;
+        FVector2D TextPosition = FVector2D::ZeroVector;
+        FVector2D ValueTextPosition = FVector2D::ZeroVector;
+    };
+
     void RecalculateChart();
     void ResetCalculatedState();
+    void InvalidateCachedLayout();
+    void EnsureCachedLayout(const FVector2D& LocalSize) const;
 
     TArray<FChartDataPoint> Data;
     TArray<FPieSlice> CalculatedSlices;
@@ -58,4 +71,9 @@ private:
     bool bShowValues = true;
     bool bShowPercentages = true;
     bool bShowLegend = true;
+    mutable bool bLayoutDirty = true;
+    mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);
+    mutable TArray<FSlateVertex> CachedVertices;
+    mutable TArray<SlateIndex> CachedIndices;
+    mutable TArray<FCachedLegendEntry> CachedLegendEntries;
 };

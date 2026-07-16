@@ -56,3 +56,15 @@ All notable changes to this project will be documented in this file.
   features.
 - Adjusted the phase 10 pie-chart presentation toward a side-legend layout,
   keeping labels and totals beside the chart instead of overlaying slice text.
+- Refactored `SBarChart` so normalized bar data and size-dependent layout are
+  cached outside `OnPaint()`.
+- Refactored `SPieChart` so cached slice-angle data now feeds a cached
+  size-dependent mesh and legend layout instead of rebuilding the full chart in
+  the render path.
+- Verified the Phase 11 implementation by compiling the host `GoTwinAppEditor`
+  target successfully on July 16, 2026.
+- Documented the Phase 11 milestone verification for separating calculation
+  from rendering.
+- Fixed the phase 11 pie-chart cached mesh path so the current widget render
+  transform is reapplied during `OnPaint()`, keeping the chart scaled and
+  positioned inside its allotted area.

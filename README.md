@@ -38,6 +38,12 @@ shared chart data contract used by both chart widget families.
   radius.
   The current presentation emphasis is a side legend layout rather than
   overlaying text directly on the slices.
+- Phase 11 milestone verified in code and host-project build on July 16, 2026:
+  both chart types now separate data preparation from rendering, with cached
+  chart state and cached size-dependent layout reused by `OnPaint()`.
+  A follow-up fix on July 16, 2026 reapplied the current widget render
+  transform to cached pie-chart mesh data so the pie chart scales and fits the
+  allotted widget area correctly.
 
 ## Key Files
 
@@ -188,6 +194,25 @@ in the codebase because:
   full phase 10 pie-chart presentation feature set compiled into the plugin
   module.
 
+## Phase 11 Milestone Check
+
+The milestone "Separate calculation from rendering" is satisfied in the
+codebase because:
+
+- `SBarChart` now prepares normalized bar data outside `OnPaint()`, then caches
+  size-dependent bar/tick layout separately before drawing from that prepared
+  state.
+- `SPieChart` continues to cache slice-angle data outside `OnPaint()`, and now
+  also caches size-dependent mesh and legend layout before rendering.
+- Property setters such as spacing, padding, legend toggles, and start angle
+  now invalidate cached layout or chart state instead of relying on `OnPaint()`
+  to recompute everything from scratch.
+- `OnPaint()` in both chart widgets is now primarily responsible for drawing
+  cached geometry/text rather than re-deriving the full chart model every
+  repaint.
+- A host-project `GoTwinAppEditor` build succeeded on July 16, 2026 with the
+  phase 11 chart-cache refactor compiled into the plugin module.
+
 ## Current Focus
 
 The repository is organized for future implementation of:
@@ -195,4 +220,4 @@ The repository is organized for future implementation of:
 - Bar charts
 - Pie charts
 - UMG and Slate integration
-- Shared chart styling and calculation cleanup
+- Shared chart styling

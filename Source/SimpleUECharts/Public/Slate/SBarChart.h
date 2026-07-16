@@ -33,11 +33,49 @@ public:
         bool bParentEnabled) const override;
 
 private:
+    struct FCachedBarData
+    {
+        FText Label;
+        FText ValueText;
+        float Value = 0.0f;
+        float NormalizedValue = 0.0f;
+        FLinearColor Color = FLinearColor::White;
+    };
+
+    struct FCachedBarLayout
+    {
+        FVector2D Position = FVector2D::ZeroVector;
+        FVector2D Size = FVector2D::ZeroVector;
+        FVector2D ValueTextPosition = FVector2D::ZeroVector;
+        FVector2D LabelTextPosition = FVector2D::ZeroVector;
+    };
+
+    struct FCachedTickLayout
+    {
+        float Y = 0.0f;
+        FText Text;
+        FVector2D TextPosition = FVector2D::ZeroVector;
+    };
+
+    void RecalculateChart();
+    void InvalidateCachedLayout();
+    void EnsureCachedLayout(const FVector2D& LocalSize) const;
+
     TArray<FChartDataPoint> Data;
+    TArray<FCachedBarData> CachedBars;
     float BarSpacing = 6.0f;
     FMargin ChartPadding = FMargin(8.0f);
     bool bShowLabels = true;
     bool bShowValues = true;
     bool bShowYAxis = true;
     bool bShowGridLines = false;
+    float CachedMaxValue = 0.0f;
+    mutable bool bLayoutDirty = true;
+    mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);
+    mutable float CachedPlotLeft = 0.0f;
+    mutable float CachedPlotTop = 0.0f;
+    mutable float CachedPlotRight = 0.0f;
+    mutable float CachedPlotBottom = 0.0f;
+    mutable TArray<FCachedBarLayout> CachedBarLayouts;
+    mutable TArray<FCachedTickLayout> CachedTickLayouts;
 };
