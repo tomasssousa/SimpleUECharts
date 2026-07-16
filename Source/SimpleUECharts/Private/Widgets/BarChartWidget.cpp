@@ -65,6 +65,10 @@ void UBarChartWidget::SynchronizeBarChartProperties()
     {
         MyBarChart->SetBarSpacing(BarSpacing);
         MyBarChart->SetChartPadding(ChartPadding);
+        MyBarChart->SetShowLabels(bShowLabels);
+        MyBarChart->SetShowValues(bShowValues);
+        MyBarChart->SetShowYAxis(bShowYAxis);
+        MyBarChart->SetShowGridLines(bShowGridLines);
     }
 }
 

@@ -16,6 +16,10 @@ public:
     void ClearData();
     void SetBarSpacing(float InBarSpacing);
     void SetChartPadding(const FMargin& InChartPadding);
+    void SetShowLabels(bool bInShowLabels);
+    void SetShowValues(bool bInShowValues);
+    void SetShowYAxis(bool bInShowYAxis);
+    void SetShowGridLines(bool bInShowGridLines);
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -32,4 +36,8 @@ private:
     TArray<FChartDataPoint> Data;
     float BarSpacing = 6.0f;
     FMargin ChartPadding = FMargin(8.0f);
+    bool bShowLabels = true;
+    bool bShowValues = true;
+    bool bShowYAxis = true;
+    bool bShowGridLines = false;
 };

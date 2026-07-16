@@ -21,6 +21,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     FMargin ChartPadding = FMargin(8.0f);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowLabels = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowValues = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowYAxis = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowGridLines = false;
+
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void SetData(const TArray<FChartDataPoint>& NewData);
 

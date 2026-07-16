@@ -21,6 +21,8 @@ shared chart data contract used by both chart widget families.
 - Phase 5 milestone verified in code: bar heights now scale from
   `FChartDataPoint::Value`, while `BarSpacing` and `ChartPadding` are
   configurable from the UMG wrapper.
+- Phase 6 milestone verified in code: labels, values, Y axis, and optional grid
+  lines are now available for the bar chart presentation layer.
 
 ## Key Files
 
@@ -95,6 +97,18 @@ is satisfied in the codebase because:
 - `FChartDataPoint::Color` still drives per-bar color.
 - `UBarChartWidget` exposes `BarSpacing` and `ChartPadding`, and synchronizes
   both into `SBarChart`.
+
+## Phase 6 Milestone Check
+
+The milestone "The bar chart is usable in a real application UI" is satisfied
+in the codebase because:
+
+- `UBarChartWidget` now exposes `bShowLabels`, `bShowValues`, `bShowYAxis`, and
+  `bShowGridLines`.
+- `SBarChart` can draw Y-axis lines and tick labels.
+- `SBarChart` can draw optional horizontal grid lines across the plot area.
+- `SBarChart` can draw per-bar labels and per-bar values in addition to the
+  scaled bar geometry.
 
 ## Current Focus
 

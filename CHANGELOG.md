@@ -21,3 +21,7 @@ All notable changes to this project will be documented in this file.
 - Added configurable `BarSpacing` and `ChartPadding` synchronization from
   `UBarChartWidget` into `SBarChart`.
 - Documented the Phase 5 milestone verification for scaled vertical bars.
+- Implemented Phase 6 presentation options for `SBarChart`, including labels,
+  values, Y axis, and optional grid lines.
+- Exposed Phase 6 bar chart presentation toggles on `UBarChartWidget`.
+- Documented the Phase 6 milestone verification for bar chart UI usability.
