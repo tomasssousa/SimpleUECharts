@@ -3,6 +3,8 @@
 #include "Slate/SBarChart.h"
 #include "Widgets/SNullWidget.h"
 
+#define LOCTEXT_NAMESPACE "SimpleUECharts"
+
 void UBarChartWidget::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
@@ -42,3 +44,12 @@ void UBarChartWidget::ReleaseSlateResources(bool bReleaseChildren)
     Super::ReleaseSlateResources(bReleaseChildren);
     MyBarChart.Reset();
 }
+
+#if WITH_EDITOR
+const FText UBarChartWidget::GetPaletteCategory()
+{
+    return LOCTEXT("PaletteCategory", "Simple UE Charts");
+}
+#endif
+
+#undef LOCTEXT_NAMESPACE

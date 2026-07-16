@@ -12,6 +12,9 @@ shared chart data contract used by both chart widget families.
 - Phase 1 milestone verified: the plugin is configured as a Runtime plugin.
 - Phase 2 milestone verified in code: `FChartDataPoint` is exposed to C++ and
   Blueprint and both chart widgets accept `TArray<FChartDataPoint>`.
+- Phase 3 milestone verified in code: `UBarChartWidget` is a concrete `UWidget`
+  with editor-visible display metadata, Blueprint API, Slate synchronization,
+  and an explicit UMG palette category.
 
 ## Key Files
 
@@ -50,6 +53,18 @@ is satisfied by the current codebase because:
 - `UPieChartWidget` stores and accepts `TArray<FChartDataPoint>`.
 - `SBarChart` and `SPieChart` receive the same shared array type from the UMG
   layer.
+
+## Phase 3 Milestone Check
+
+The milestone "`Bar Chart` appears in the UMG Widget Palette" is satisfied in
+the codebase because:
+
+- `UBarChartWidget` is a non-abstract `UWidget` with `DisplayName = "Bar Chart"`.
+- The widget exposes `Data`, `SetData`, `ClearData`, and `RefreshChart`.
+- `RebuildWidget()` creates the underlying `SBarChart`.
+- `SynchronizeProperties()` forwards the current `Data` array to Slate.
+- `GetPaletteCategory()` places the widget under `Simple UE Charts` in the UMG
+  palette when viewed in the editor.
 
 ## Current Focus
 

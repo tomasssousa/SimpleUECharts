@@ -10,3 +10,6 @@ All notable changes to this project will be documented in this file.
   contract for both chart widget APIs.
 - Documented the Phase 2 milestone verification and shared dataset usage in the
   README.
+- Completed the Phase 3 `UBarChartWidget` wrapper with explicit UMG palette
+  categorization for the editor.
+- Documented the Phase 3 milestone verification for the bar chart UMG widget.
