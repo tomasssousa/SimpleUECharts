@@ -1,6 +1,19 @@
 #include "Slate/SPieChart.h"
 
 #include "Math/UnrealMathUtility.h"
+#include "Rendering/DrawElements.h"
+#include "Styling/CoreStyle.h"
+
+namespace
+{
+int32 CalculateSliceSegmentCount(float SweepAngleRadians, float Radius)
+{
+    const float ArcLength = SweepAngleRadians * Radius;
+    const int32 ByAngle = FMath::CeilToInt(SweepAngleRadians / (UE_PI / 24.0f));
+    const int32 ByArcLength = FMath::CeilToInt(ArcLength / 12.0f);
+    return FMath::Clamp(FMath::Max3(1, ByAngle, ByArcLength), 1, 128);
+}
+}
 
 void SPieChart::Construct(const FArguments& InArgs)
 {
@@ -103,6 +116,123 @@ int32 SPieChart::OnPaint(
     const FWidgetStyle& InWidgetStyle,
     bool bParentEnabled) const
 {
-    // Phase 8 prepares validated slice angles; phase 9 will render them.
+    if (CalculatedSlices.IsEmpty())
+    {
+        return LayerId;
+    }
+
+    const FVector2D LocalSize = AllottedGeometry.GetLocalSize();
+    const float Radius = 0.5f * FMath::Min(LocalSize.X, LocalSize.Y);
+
+    if (Radius <= KINDA_SMALL_NUMBER)
+    {
+        return LayerId;
+    }
+
+    const FSlateBrush* WhiteBrush = FCoreStyle::Get().GetBrush(TEXT("GenericWhiteBox"));
+
+    if (WhiteBrush == nullptr)
+    {
+        return LayerId;
+    }
+
+    const FSlateResourceHandle ResourceHandle = WhiteBrush->GetRenderingResource();
+
+    if (!ResourceHandle.IsValid())
+    {
+        return LayerId;
+    }
+
+    const FSlateShaderResourceProxy* ResourceProxy = ResourceHandle.GetResourceProxy();
+    FVector2f UVStart = FVector2f::ZeroVector;
+    FVector2f UVSize = FVector2f(1.0f, 1.0f);
+
+    if (ResourceProxy != nullptr)
+    {
+        UVStart = ResourceProxy->StartUV;
+        UVSize = ResourceProxy->SizeUV;
+    }
+
+    const FVector2f Center = FVector2f(LocalSize * 0.5f);
+    const FSlateRenderTransform& RenderTransform = AllottedGeometry.GetAccumulatedRenderTransform();
+    const ESlateDrawEffect DrawEffects = bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
+    const FLinearColor Tint = InWidgetStyle.GetColorAndOpacityTint();
+
+    TArray<FSlateVertex> Vertices;
+    TArray<SlateIndex> Indices;
+
+    int32 EstimatedVertexCount = 0;
+    int32 EstimatedIndexCount = 0;
+    for (const FPieSlice& Slice : CalculatedSlices)
+    {
+        const int32 SegmentCount = CalculateSliceSegmentCount(Slice.SweepAngleRadians, Radius);
+        EstimatedVertexCount += SegmentCount + 2;
+        EstimatedIndexCount += SegmentCount * 3;
+    }
+
+    Vertices.Reserve(EstimatedVertexCount);
+    Indices.Reserve(EstimatedIndexCount);
+
+    for (const FPieSlice& Slice : CalculatedSlices)
+    {
+        if (Slice.SweepAngleRadians <= KINDA_SMALL_NUMBER)
+        {
+            continue;
+        }
+
+        const int32 SegmentCount = CalculateSliceSegmentCount(Slice.SweepAngleRadians, Radius);
+        const SlateIndex CenterIndex = static_cast<SlateIndex>(Vertices.Num());
+        const FColor SliceColor = (Slice.Color * Tint).ToFColor(true);
+
+        Vertices.Add(FSlateVertex::Make(
+            RenderTransform,
+            Center,
+            FVector2f(UVStart.X + (UVSize.X * 0.5f), UVStart.Y + (UVSize.Y * 0.5f)),
+            SliceColor));
+
+        for (int32 SegmentIndex = 0; SegmentIndex <= SegmentCount; ++SegmentIndex)
+        {
+            const float Alpha = static_cast<float>(SegmentIndex) / SegmentCount;
+            const float AngleRadians = SegmentIndex == SegmentCount
+                ? Slice.EndAngleRadians
+                : FMath::Lerp(Slice.StartAngleRadians, Slice.EndAngleRadians, Alpha);
+
+            float SinAngle = 0.0f;
+            float CosAngle = 0.0f;
+            FMath::SinCos(&SinAngle, &CosAngle, AngleRadians);
+
+            const FVector2f UnitDirection(CosAngle, SinAngle);
+            const FVector2f Position = Center + (UnitDirection * Radius);
+            const FVector2f TexCoord = FVector2f(0.5f) + (UnitDirection * 0.5f);
+
+            Vertices.Add(FSlateVertex::Make(
+                RenderTransform,
+                Position,
+                FVector2f(UVStart.X + (UVSize.X * TexCoord.X), UVStart.Y + (UVSize.Y * TexCoord.Y)),
+                SliceColor));
+        }
+
+        for (int32 SegmentIndex = 0; SegmentIndex < SegmentCount; ++SegmentIndex)
+        {
+            Indices.Add(CenterIndex);
+            Indices.Add(CenterIndex + SegmentIndex + 1);
+            Indices.Add(CenterIndex + SegmentIndex + 2);
+        }
+    }
+
+    if (!Vertices.IsEmpty() && !Indices.IsEmpty())
+    {
+        FSlateDrawElement::MakeCustomVerts(
+            OutDrawElements,
+            LayerId,
+            ResourceHandle,
+            Vertices,
+            Indices,
+            nullptr,
+            0,
+            0,
+            DrawEffects);
+    }
+
     return LayerId;
 }
