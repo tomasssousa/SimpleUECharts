@@ -14,6 +14,8 @@ public:
 
     void SetData(const TArray<FChartDataPoint>& NewData);
     void ClearData();
+    void SetBarSpacing(float InBarSpacing);
+    void SetChartPadding(const FMargin& InChartPadding);
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -28,4 +30,6 @@ public:
 
 private:
     TArray<FChartDataPoint> Data;
+    float BarSpacing = 6.0f;
+    FMargin ChartPadding = FMargin(8.0f);
 };

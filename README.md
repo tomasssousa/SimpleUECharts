@@ -18,6 +18,9 @@ shared chart data contract used by both chart widget families.
 - Phase 4 milestone verified in code: `SBarChart` now renders one rectangle per
   data point in `OnPaint()`, establishing the first visible native Slate output
   for bar charts.
+- Phase 5 milestone verified in code: bar heights now scale from
+  `FChartDataPoint::Value`, while `BarSpacing` and `ChartPadding` are
+  configurable from the UMG wrapper.
 
 ## Key Files
 
@@ -79,6 +82,19 @@ the codebase because:
 - Each bar uses the corresponding `FChartDataPoint::Color`.
 - The implementation stays intentionally minimal and does not yet claim the
   automatic scaling work planned for Phase 5.
+
+## Phase 5 Milestone Check
+
+The milestone "A valid dataset produces a correctly scaled vertical bar chart"
+is satisfied in the codebase because:
+
+- `SBarChart::OnPaint()` now finds the maximum `Value` across the dataset.
+- Each bar height is normalized against that maximum before drawing.
+- Bar Y positions are derived from the normalized height, so bars grow upward
+  from the bottom of the chart area.
+- `FChartDataPoint::Color` still drives per-bar color.
+- `UBarChartWidget` exposes `BarSpacing` and `ChartPadding`, and synchronizes
+  both into `SBarChart`.
 
 ## Current Focus
 

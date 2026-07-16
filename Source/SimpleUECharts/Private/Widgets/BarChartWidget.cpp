@@ -17,10 +17,23 @@ void UBarChartWidget::ClearData()
     RefreshChart();
 }
 
+void UBarChartWidget::SetBarSpacing(float NewBarSpacing)
+{
+    BarSpacing = FMath::Max(0.0f, NewBarSpacing);
+    RefreshChart();
+}
+
+void UBarChartWidget::SetChartPadding(FMargin NewChartPadding)
+{
+    ChartPadding = NewChartPadding;
+    RefreshChart();
+}
+
 void UBarChartWidget::RefreshChart()
 {
     if (MyBarChart.IsValid())
     {
+        SynchronizeBarChartProperties();
         MyBarChart->SetData(Data);
     }
 }
@@ -28,6 +41,7 @@ void UBarChartWidget::RefreshChart()
 TSharedRef<SWidget> UBarChartWidget::RebuildWidget()
 {
     SAssignNew(MyBarChart, SBarChart);
+    SynchronizeBarChartProperties();
     MyBarChart->SetData(Data);
 
     return MyBarChart.IsValid() ? MyBarChart.ToSharedRef() : SNullWidget::NullWidget;
@@ -43,6 +57,15 @@ void UBarChartWidget::ReleaseSlateResources(bool bReleaseChildren)
 {
     Super::ReleaseSlateResources(bReleaseChildren);
     MyBarChart.Reset();
+}
+
+void UBarChartWidget::SynchronizeBarChartProperties()
+{
+    if (MyBarChart.IsValid())
+    {
+        MyBarChart->SetBarSpacing(BarSpacing);
+        MyBarChart->SetChartPadding(ChartPadding);
+    }
 }
 
 #if WITH_EDITOR

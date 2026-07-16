@@ -15,11 +15,23 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     TArray<FChartDataPoint> Data;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0"))
+    float BarSpacing = 6.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FMargin ChartPadding = FMargin(8.0f);
+
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void SetData(const TArray<FChartDataPoint>& NewData);
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void ClearData();
+
+    UFUNCTION(BlueprintCallable, Category = "Chart")
+    void SetBarSpacing(float NewBarSpacing);
+
+    UFUNCTION(BlueprintCallable, Category = "Chart")
+    void SetChartPadding(FMargin NewChartPadding);
 
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void RefreshChart();
@@ -34,5 +46,7 @@ protected:
 #endif
 
 private:
+    void SynchronizeBarChartProperties();
+
     TSharedPtr<SBarChart> MyBarChart;
 };

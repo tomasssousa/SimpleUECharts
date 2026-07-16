@@ -19,6 +19,18 @@ void SBarChart::ClearData()
     Invalidate(EInvalidateWidgetReason::Paint);
 }
 
+void SBarChart::SetBarSpacing(float InBarSpacing)
+{
+    BarSpacing = FMath::Max(0.0f, InBarSpacing);
+    Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+void SBarChart::SetChartPadding(const FMargin& InChartPadding)
+{
+    ChartPadding = InChartPadding;
+    Invalidate(EInvalidateWidgetReason::Paint);
+}
+
 FVector2D SBarChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
 {
     return FVector2D(300.0f, 200.0f);
@@ -39,26 +51,41 @@ int32 SBarChart::OnPaint(
     }
 
     const FVector2D LocalSize = AllottedGeometry.GetLocalSize();
-    const float HorizontalPadding = 8.0f;
-    const float VerticalPadding = 8.0f;
-    const float BarSpacing = 6.0f;
-    const float AvailableWidth = LocalSize.X - (HorizontalPadding * 2.0f) - (BarSpacing * (Data.Num() - 1));
-    const float AvailableHeight = LocalSize.Y - (VerticalPadding * 2.0f);
+    const float AvailableWidth = LocalSize.X - ChartPadding.Left - ChartPadding.Right - (BarSpacing * (Data.Num() - 1));
+    const float AvailableHeight = LocalSize.Y - ChartPadding.Top - ChartPadding.Bottom;
 
     if (AvailableWidth <= 0.0f || AvailableHeight <= 0.0f)
     {
         return LayerId;
     }
 
+    float MaxValue = 0.0f;
+    for (const FChartDataPoint& Point : Data)
+    {
+        MaxValue = FMath::Max(MaxValue, Point.Value);
+    }
+
+    if (MaxValue <= 0.0f)
+    {
+        return LayerId;
+    }
+
     const float BarWidth = AvailableWidth / Data.Num();
-    const float BarHeight = FMath::Max(AvailableHeight * 0.7f, 1.0f);
-    const float BarY = LocalSize.Y - VerticalPadding - BarHeight;
+
+    if (BarWidth <= 0.0f)
+    {
+        return LayerId;
+    }
+
     const ESlateDrawEffect DrawEffects = bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
     static const FSlateColorBrush WhiteBrush(FLinearColor::White);
 
     for (int32 Index = 0; Index < Data.Num(); ++Index)
     {
-        const float BarX = HorizontalPadding + (Index * (BarWidth + BarSpacing));
+        const float NormalizedValue = FMath::Clamp(Data[Index].Value / MaxValue, 0.0f, 1.0f);
+        const float BarHeight = NormalizedValue * AvailableHeight;
+        const float BarX = ChartPadding.Left + (Index * (BarWidth + BarSpacing));
+        const float BarY = LocalSize.Y - ChartPadding.Bottom - BarHeight;
         const FVector2D BarPosition(BarX, BarY);
         const FVector2D BarSize(BarWidth, BarHeight);
 

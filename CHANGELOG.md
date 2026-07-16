@@ -16,3 +16,8 @@ All notable changes to this project will be documented in this file.
 - Implemented the Phase 4 minimal `SBarChart` rendering path for one or more
   bars in native Slate.
 - Documented the Phase 4 milestone verification for the Slate bar chart widget.
+- Implemented the Phase 5 bar chart scaling logic based on the maximum data
+  value.
+- Added configurable `BarSpacing` and `ChartPadding` synchronization from
+  `UBarChartWidget` into `SBarChart`.
+- Documented the Phase 5 milestone verification for scaled vertical bars.
