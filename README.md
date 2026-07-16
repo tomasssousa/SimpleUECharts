@@ -23,6 +23,12 @@ shared chart data contract used by both chart widget families.
   configurable from the UMG wrapper.
 - Phase 6 milestone verified in code: labels, values, Y axis, and optional grid
   lines are now available for the bar chart presentation layer.
+- Phase 7 milestone verified in code: `UPieChartWidget` is exposed as a UMG
+  widget with shared chart data input, Blueprint API, Slate synchronization,
+  and an explicit UMG palette category.
+- Phase 8 milestone verified in code and host-project build on July 16, 2026:
+  `SPieChart` now prepares validated pie-slice percentages and accumulated
+  angles from shared chart data, ready for rendering in the next phase.
 
 ## Key Files
 
@@ -110,6 +116,33 @@ in the codebase because:
 - `SBarChart` can draw per-bar labels and per-bar values in addition to the
   scaled bar geometry.
 
+## Phase 7 Milestone Check
+
+The milestone "`Pie Chart` appears in the UMG Widget Palette and can receive
+data" is satisfied in the codebase because:
+
+- `UPieChartWidget` is a non-abstract `UWidget` with `DisplayName = "Pie Chart"`.
+- The widget exposes `Data`, `SetData`, `ClearData`, and `RefreshChart`.
+- `RebuildWidget()` creates the underlying `SPieChart`.
+- `SynchronizeProperties()` forwards the current shared data array to Slate.
+- `GetPaletteCategory()` places the widget under `Simple UE Charts` in the UMG
+  palette when viewed in the editor.
+
+## Phase 8 Milestone Check
+
+The milestone "The plugin correctly calculates all pie slice angles" is
+satisfied in the codebase because:
+
+- `SPieChart::RecalculateChart()` sums only positive values into `TotalValue`.
+- Each valid slice stores its `Percentage`, `StartAngleRadians`,
+  `EndAngleRadians`, and `SweepAngleRadians` in prepared state.
+- Non-positive values are excluded from slice generation, preventing invalid
+  proportions and divide-by-zero paths for the phase 8 scope.
+- The final slice is clamped to end exactly at `2 * PI`, reducing accumulated
+  floating-point drift before rendering.
+- The current implementation keeps calculation separate from `OnPaint()`, so
+  phase 9 can render directly from prepared pie-slice geometry inputs.
+
 ## Current Focus
 
 The repository is organized for future implementation of:
@@ -117,3 +150,4 @@ The repository is organized for future implementation of:
 - Bar charts
 - Pie charts
 - UMG and Slate integration
+- Pie slice rendering in native Slate

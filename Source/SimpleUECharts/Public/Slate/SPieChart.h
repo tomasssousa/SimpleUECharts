@@ -27,5 +27,21 @@ public:
         bool bParentEnabled) const override;
 
 private:
+    struct FPieSlice
+    {
+        int32 SourceIndex = INDEX_NONE;
+        float Value = 0.0f;
+        float Percentage = 0.0f;
+        float StartAngleRadians = 0.0f;
+        float EndAngleRadians = 0.0f;
+        float SweepAngleRadians = 0.0f;
+        FLinearColor Color = FLinearColor::White;
+    };
+
+    void RecalculateChart();
+    void ResetCalculatedState();
+
     TArray<FChartDataPoint> Data;
+    TArray<FPieSlice> CalculatedSlices;
+    float TotalValue = 0.0f;
 };
