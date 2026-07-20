@@ -70,6 +70,7 @@ void UPieChartWidget::SynchronizePieChartProperties()
         FPieChartStyle ResolvedPieChartStyle = PieChartStyle;
         ResolvedPieChartStyle.SliceSpacing = FMath::Max(0.0f, ResolvedPieChartStyle.SliceSpacing);
         ResolvedPieChartStyle.InnerRadius = FMath::Clamp(ResolvedPieChartStyle.InnerRadius, 0.0f, 0.95f);
+        ResolvedPieChartStyle.PieHorizontalAlignment = FMath::Clamp(ResolvedPieChartStyle.PieHorizontalAlignment, 0.0f, 1.0f);
         ResolvedPieChartStyle.LegendSpacing = FMath::Max(0.0f, ResolvedPieChartStyle.LegendSpacing);
 
         MyPieChart->SetChartStyle(ResolvedChartStyle);

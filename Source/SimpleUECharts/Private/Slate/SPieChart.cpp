@@ -261,8 +261,10 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         return;
     }
 
+    const float PieAlignment = FMath::Clamp(PieChartStyle.PieHorizontalAlignment, 0.0f, 1.0f);
+    const float AvailablePieOffsetX = FMath::Max(PieAreaWidth - (Radius * 2.0f), 0.0f);
     const FVector2f Center(
-        ChartStyle.Padding.Left + (PieAreaWidth * 0.5f),
+        ChartStyle.Padding.Left + Radius + (AvailablePieOffsetX * PieAlignment),
         ChartStyle.Padding.Top + (PieAreaHeight * 0.5f));
     const float InnerRadiusPixels = PieChartStyle.InnerRadius * Radius;
 

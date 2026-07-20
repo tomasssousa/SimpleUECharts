@@ -84,6 +84,9 @@ struct SIMPLEUECHARTS_API FPieChartStyle
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     float InnerRadius;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+    float PieHorizontalAlignment;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     bool bShowLabels;
 
