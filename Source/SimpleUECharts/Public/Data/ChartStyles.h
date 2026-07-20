@@ -25,6 +25,12 @@ struct SIMPLEUECHARTS_API FChartStyle
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     FMargin LabelPadding;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.1", UIMin = "0.1", UIMax = "3.0"))
+    float ChartScale;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.1", UIMin = "0.1", UIMax = "3.0"))
+    float TextScale;
 };
 
 USTRUCT(BlueprintType)
@@ -89,4 +95,7 @@ struct SIMPLEUECHARTS_API FPieChartStyle
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     bool bShowLegend;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "64.0"))
+    float LegendSpacing;
 };

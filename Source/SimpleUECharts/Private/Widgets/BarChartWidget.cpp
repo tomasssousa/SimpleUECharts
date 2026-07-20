@@ -75,6 +75,10 @@ void UBarChartWidget::SynchronizeBarChartProperties()
 {
     if (MyBarChart.IsValid())
     {
+        FChartStyle ResolvedChartStyle = ChartStyle;
+        ResolvedChartStyle.ChartScale = FMath::Max(0.1f, ResolvedChartStyle.ChartScale);
+        ResolvedChartStyle.TextScale = FMath::Max(0.1f, ResolvedChartStyle.TextScale);
+
         FBarChartStyle ResolvedBarChartStyle = BarChartStyle;
         ResolvedBarChartStyle.BarSpacing = FMath::Max(0.0f, ResolvedBarChartStyle.BarSpacing);
         ResolvedBarChartStyle.MinimumBarWidth = FMath::Max(0.0f, ResolvedBarChartStyle.MinimumBarWidth);
@@ -86,7 +90,7 @@ void UBarChartWidget::SynchronizeBarChartProperties()
             Swap(ResolvedBarChartStyle.MinimumBarWidth, ResolvedBarChartStyle.MaximumBarWidth);
         }
 
-        MyBarChart->SetChartStyle(ChartStyle);
+        MyBarChart->SetChartStyle(ResolvedChartStyle);
         MyBarChart->SetBarChartStyle(ResolvedBarChartStyle);
     }
 }

@@ -63,11 +63,16 @@ void UPieChartWidget::SynchronizePieChartProperties()
 {
     if (MyPieChart.IsValid())
     {
+        FChartStyle ResolvedChartStyle = ChartStyle;
+        ResolvedChartStyle.ChartScale = FMath::Max(0.1f, ResolvedChartStyle.ChartScale);
+        ResolvedChartStyle.TextScale = FMath::Max(0.1f, ResolvedChartStyle.TextScale);
+
         FPieChartStyle ResolvedPieChartStyle = PieChartStyle;
         ResolvedPieChartStyle.SliceSpacing = FMath::Max(0.0f, ResolvedPieChartStyle.SliceSpacing);
         ResolvedPieChartStyle.InnerRadius = FMath::Clamp(ResolvedPieChartStyle.InnerRadius, 0.0f, 0.95f);
+        ResolvedPieChartStyle.LegendSpacing = FMath::Max(0.0f, ResolvedPieChartStyle.LegendSpacing);
 
-        MyPieChart->SetChartStyle(ChartStyle);
+        MyPieChart->SetChartStyle(ResolvedChartStyle);
         MyPieChart->SetPieChartStyle(ResolvedPieChartStyle);
     }
 }

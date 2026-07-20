@@ -39,11 +39,12 @@ The plugin currently provides:
 - C++ and Blueprint data updates through `SetData`, `ClearData`, and
   `RefreshChart`
 - Automatic bar-chart value scaling
+- Shared chart scaling and text/legend scaling through `FChartStyle`
 - Per-data-point colors
 - Bar-chart labels, values, Y axis, and optional grid lines
 - Pie-chart slice angle calculation and native Slate mesh rendering
 - Pie-chart legend, value display, percentage display, start angle, slice
-  spacing, and donut-style inner radius
+  spacing, donut-style inner radius, and configurable legend spacing
 - Separation between chart calculation and chart rendering, with cached
   prepared state reused by `OnPaint()`
 
@@ -246,6 +247,8 @@ Bar-chart styling example:
 BarChart->ChartStyle.BackgroundColor = FLinearColor(0.04f, 0.04f, 0.06f, 1.0f);
 BarChart->ChartStyle.TextColor = FLinearColor::White;
 BarChart->ChartStyle.Padding = FMargin(16.0f, 12.0f);
+BarChart->ChartStyle.ChartScale = 0.9f;
+BarChart->ChartStyle.TextScale = 1.15f;
 
 BarChart->BarChartStyle.BarSpacing = 12.0f;
 BarChart->BarChartStyle.bShowGridLines = true;
@@ -261,10 +264,13 @@ Pie-chart styling example:
 PieChart->ChartStyle.BackgroundColor = FLinearColor(0.06f, 0.06f, 0.08f, 1.0f);
 PieChart->ChartStyle.TextColor = FLinearColor::White;
 PieChart->ChartStyle.Padding = FMargin(14.0f);
+PieChart->ChartStyle.ChartScale = 0.85f;
+PieChart->ChartStyle.TextScale = 1.2f;
 
 PieChart->PieChartStyle.StartAngle = -90.0f;
 PieChart->PieChartStyle.SliceSpacing = 6.0f;
 PieChart->PieChartStyle.InnerRadius = 0.45f;
+PieChart->PieChartStyle.LegendSpacing = 28.0f;
 PieChart->PieChartStyle.bShowLegend = true;
 
 PieChart->RefreshChart();
@@ -280,6 +286,24 @@ The plugin also supports Blueprint workflows:
 4. Call `SetData`.
 5. Optionally adjust `ChartStyle`, `BarChartStyle`, or `PieChartStyle`.
 6. Call `RefreshChart` if you changed style values after creation.
+
+## Scaling Controls
+
+The shared `FChartStyle` struct exposes:
+
+- `ChartScale`
+  Scales bar and pie chart geometry.
+- `TextScale`
+  Scales bar labels, value text, Y-axis labels, and pie-chart legend text and
+  swatches.
+
+The pie-chart-specific `FPieChartStyle` also exposes:
+
+- `LegendSpacing`
+  Controls the gap between the pie graphic and the legend block.
+
+These settings are available in both C++ and Blueprint through the widget
+style properties.
 
 ## Current Scope
 

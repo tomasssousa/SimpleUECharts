@@ -7,8 +7,7 @@
 
 namespace
 {
-constexpr float LegendGap = 16.0f;
-constexpr float LegendSwatchSize = 10.0f;
+constexpr float BaseLegendSwatchSize = 10.0f;
 
 int32 CalculateSliceSegmentCount(float SweepAngleRadians, float Radius)
 {
@@ -46,6 +45,30 @@ FString BuildLegendValueText(float Value, float Percentage, bool bIncludeValue, 
     }
 
     return FString::Join(Parts, TEXT("  "));
+}
+
+float GetChartScale(const FChartStyle& InChartStyle)
+{
+    return FMath::Max(0.1f, InChartStyle.ChartScale);
+}
+
+float GetTextScale(const FChartStyle& InChartStyle)
+{
+    return FMath::Max(0.1f, InChartStyle.TextScale);
+}
+
+float GetLegendSwatchSize(const FChartStyle& InChartStyle)
+{
+    return BaseLegendSwatchSize * GetTextScale(InChartStyle);
+}
+
+FMargin ScaleMargin(const FMargin& InMargin, float Scale)
+{
+    return FMargin(
+        InMargin.Left * Scale,
+        InMargin.Top * Scale,
+        InMargin.Right * Scale,
+        InMargin.Bottom * Scale);
 }
 }
 
@@ -183,16 +206,55 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         return;
     }
 
+    const float ChartScale = GetChartScale(ChartStyle);
+    const float TextScale = GetTextScale(ChartStyle);
+    const FMargin ScaledLabelPadding = ScaleMargin(ChartStyle.LabelPadding, TextScale);
     const FSlateFontInfo ChartFont = GetChartFont();
     const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
     const float FontHeight = FontMeasure->GetMaxCharacterHeight(ChartFont);
+    const float LegendSwatchSize = GetLegendSwatchSize(ChartStyle);
     const bool bShowLegendValueColumn = PieChartStyle.bShowValues || PieChartStyle.bShowPercentages;
-    const float LegendWidth = PieChartStyle.bShowLegend ? FMath::Clamp(LocalSize.X * 0.42f, 160.0f, 240.0f) : 0.0f;
+    float MaxLegendLabelWidth = 0.0f;
+    float MaxLegendValueWidth = 0.0f;
+
+    if (PieChartStyle.bShowLegend)
+    {
+        for (int32 SliceIndex = 0; SliceIndex < CalculatedSlices.Num(); ++SliceIndex)
+        {
+            const FPieSlice& Slice = CalculatedSlices[SliceIndex];
+            const FChartDataPoint& Point = Data[Slice.SourceIndex];
+
+            if (PieChartStyle.bShowLabels)
+            {
+                const FString LabelText = BuildLegendLabelText(Point, SliceIndex);
+                MaxLegendLabelWidth = FMath::Max(MaxLegendLabelWidth, FontMeasure->Measure(LabelText, ChartFont).X);
+            }
+
+            const FString ValueText = BuildLegendValueText(
+                Slice.Value,
+                Slice.Percentage,
+                PieChartStyle.bShowValues,
+                PieChartStyle.bShowPercentages);
+
+            if (!ValueText.IsEmpty())
+            {
+                MaxLegendValueWidth = FMath::Max(MaxLegendValueWidth, FontMeasure->Measure(ValueText, ChartFont).X);
+            }
+        }
+    }
+
+    const float LegendLabelGap = MaxLegendLabelWidth > 0.0f ? ScaledLabelPadding.Left : 0.0f;
+    const float LegendValueGap = (MaxLegendLabelWidth > 0.0f && MaxLegendValueWidth > 0.0f)
+        ? ScaledLabelPadding.Right
+        : 0.0f;
+    const float LegendWidth = PieChartStyle.bShowLegend
+        ? LegendSwatchSize + LegendLabelGap + MaxLegendLabelWidth + LegendValueGap + MaxLegendValueWidth
+        : 0.0f;
     const float HorizontalPadding = ChartStyle.Padding.Left + ChartStyle.Padding.Right;
     const float VerticalPadding = ChartStyle.Padding.Top + ChartStyle.Padding.Bottom;
-    const float PieAreaWidth = LocalSize.X - HorizontalPadding - LegendWidth - (PieChartStyle.bShowLegend ? LegendGap : 0.0f);
+    const float PieAreaWidth = LocalSize.X - HorizontalPadding - LegendWidth - (PieChartStyle.bShowLegend ? PieChartStyle.LegendSpacing : 0.0f);
     const float PieAreaHeight = LocalSize.Y - VerticalPadding;
-    const float Radius = 0.5f * FMath::Min(PieAreaWidth, PieAreaHeight);
+    const float Radius = 0.5f * FMath::Min(PieAreaWidth, PieAreaHeight) * FMath::Min(ChartScale, 1.0f);
 
     if (PieAreaWidth <= 0.0f || PieAreaHeight <= 0.0f || Radius <= KINDA_SMALL_NUMBER)
     {
@@ -227,14 +289,15 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     const FSlateRenderTransform RenderTransform = FSlateRenderTransform();
     const float LegendEntryHeight = FMath::Max(
-        FontHeight + ChartStyle.LabelPadding.Top + ChartStyle.LabelPadding.Bottom,
-        LegendSwatchSize + ChartStyle.LabelPadding.Top + ChartStyle.LabelPadding.Bottom);
+        FontHeight + ScaledLabelPadding.Top + ScaledLabelPadding.Bottom,
+        LegendSwatchSize + ScaledLabelPadding.Top + ScaledLabelPadding.Bottom);
+    const float SliceSpacing = PieChartStyle.SliceSpacing * ChartScale;
 
     int32 EstimatedVertexCount = 0;
     int32 EstimatedIndexCount = 0;
     for (const FPieSlice& Slice : CalculatedSlices)
     {
-        const float GapAngle = FMath::Min(PieChartStyle.SliceSpacing / FMath::Max(Radius, 1.0f), Slice.SweepAngleRadians * 0.9f);
+        const float GapAngle = FMath::Min(SliceSpacing / FMath::Max(Radius, 1.0f), Slice.SweepAngleRadians * 0.9f);
         const float RenderSweep = FMath::Max(0.0f, Slice.SweepAngleRadians - GapAngle);
         const int32 SegmentCount = CalculateSliceSegmentCount(RenderSweep, Radius);
         EstimatedVertexCount += InnerRadiusPixels > KINDA_SMALL_NUMBER ? (SegmentCount + 1) * 2 : SegmentCount + 2;
@@ -251,7 +314,7 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
             continue;
         }
 
-        const float GapAngle = FMath::Min(PieChartStyle.SliceSpacing / FMath::Max(Radius, 1.0f), Slice.SweepAngleRadians * 0.9f);
+        const float GapAngle = FMath::Min(SliceSpacing / FMath::Max(Radius, 1.0f), Slice.SweepAngleRadians * 0.9f);
         const float RenderStartAngle = Slice.StartAngleRadians + (GapAngle * 0.5f);
         const float RenderEndAngle = Slice.EndAngleRadians - (GapAngle * 0.5f);
         const float RenderSweep = RenderEndAngle - RenderStartAngle;
@@ -354,7 +417,7 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     if (PieChartStyle.bShowLegend)
     {
-        const float LegendX = ChartStyle.Padding.Left + PieAreaWidth + LegendGap;
+        const float LegendX = ChartStyle.Padding.Left + PieAreaWidth + PieChartStyle.LegendSpacing;
         const float TotalLegendHeight = CalculatedSlices.Num() * LegendEntryHeight;
         float LegendY = ChartStyle.Padding.Top + FMath::Max((PieAreaHeight - TotalLegendHeight) * 0.5f, 0.0f);
 
@@ -373,17 +436,17 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
                 PieChartStyle.bShowPercentages);
             LegendEntry.SwatchPosition = FVector2D(
                 LegendX,
-                LegendY + ChartStyle.LabelPadding.Top + FMath::Max((FontHeight - LegendSwatchSize) * 0.5f, 0.0f));
+                LegendY + ScaledLabelPadding.Top + FMath::Max((FontHeight - LegendSwatchSize) * 0.5f, 0.0f));
             LegendEntry.TextPosition = FVector2D(
-                LegendX + LegendSwatchSize + ChartStyle.LabelPadding.Left,
-                LegendY + ChartStyle.LabelPadding.Top);
+                LegendX + LegendSwatchSize + LegendLabelGap,
+                LegendY + ScaledLabelPadding.Top);
 
             if (!LegendEntry.ValueText.IsEmpty() && bShowLegendValueColumn)
             {
                 const FVector2D ValueTextSize = FontMeasure->Measure(LegendEntry.ValueText, ChartFont);
                 LegendEntry.ValueTextPosition = FVector2D(
                     LegendX + LegendWidth - ValueTextSize.X,
-                    LegendY + ChartStyle.LabelPadding.Top);
+                    LegendY + ScaledLabelPadding.Top);
             }
             else
             {
@@ -397,14 +460,28 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
 FSlateFontInfo SPieChart::GetChartFont() const
 {
-    return ChartStyle.Font.Size > 0
+    FSlateFontInfo ChartFont = ChartStyle.Font.Size > 0
         ? ChartStyle.Font
         : FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 10);
+
+    ChartFont.Size = FMath::Max(1, FMath::RoundToInt(ChartFont.Size * GetTextScale(ChartStyle)));
+    return ChartFont;
 }
 
 FVector2D SPieChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
 {
-    return FVector2D(320.0f, 220.0f);
+    const float ChartScale = GetChartScale(ChartStyle);
+    const float TextScale = GetTextScale(ChartStyle);
+    const float LegendWidth = PieChartStyle.bShowLegend
+        ? (40.0f * TextScale) +
+            (PieChartStyle.bShowLabels ? 90.0f * TextScale : 0.0f) +
+            ((PieChartStyle.bShowValues || PieChartStyle.bShowPercentages) ? 72.0f * TextScale : 0.0f) +
+            PieChartStyle.LegendSpacing
+        : 0.0f;
+
+    return FVector2D(
+        (200.0f * ChartScale) + LegendWidth + 16.0f,
+        FMath::Max(200.0f * ChartScale, 120.0f * TextScale));
 }
 
 int32 SPieChart::OnPaint(
@@ -419,6 +496,7 @@ int32 SPieChart::OnPaint(
     const FVector2D LocalSize = AllottedGeometry.GetLocalSize();
     const FSlateBrush* WhiteBrush = FCoreStyle::Get().GetBrush(TEXT("GenericWhiteBox"));
     const FSlateFontInfo ChartFont = GetChartFont();
+    const float LegendSwatchSize = GetLegendSwatchSize(ChartStyle);
     const FSlateResourceHandle ResourceHandle = WhiteBrush->GetRenderingResource();
     const ESlateDrawEffect DrawEffects = bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
     const FLinearColor Tint = InWidgetStyle.GetColorAndOpacityTint();

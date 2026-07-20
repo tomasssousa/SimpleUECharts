@@ -6,6 +6,28 @@
 #include "Styling/CoreStyle.h"
 #include "Rendering/DrawElements.h"
 
+namespace
+{
+float GetChartScale(const FChartStyle& InChartStyle)
+{
+    return FMath::Max(0.1f, InChartStyle.ChartScale);
+}
+
+float GetTextScale(const FChartStyle& InChartStyle)
+{
+    return FMath::Max(0.1f, InChartStyle.TextScale);
+}
+
+FMargin ScaleMargin(const FMargin& InMargin, float Scale)
+{
+    return FMargin(
+        InMargin.Left * Scale,
+        InMargin.Top * Scale,
+        InMargin.Right * Scale,
+        InMargin.Bottom * Scale);
+}
+}
+
 void SBarChart::Construct(const FArguments& InArgs)
 {
     RecalculateChart();
@@ -106,21 +128,55 @@ void SBarChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         return;
     }
 
+    const float ChartScale = GetChartScale(ChartStyle);
+    const float TextScale = GetTextScale(ChartStyle);
+    const FMargin ScaledLabelPadding = ScaleMargin(ChartStyle.LabelPadding, TextScale);
     const FSlateFontInfo ChartFont = GetChartFont();
     const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
     const float FontHeight = FontMeasure->GetMaxCharacterHeight(ChartFont);
-    const float LabelSpacing = ChartStyle.LabelPadding.Top + ChartStyle.LabelPadding.Bottom;
-    const float ValueSpacing = ChartStyle.LabelPadding.Top + ChartStyle.LabelPadding.Bottom;
+    const float LabelSpacing = ScaledLabelPadding.Top + ScaledLabelPadding.Bottom;
+    const float ValueSpacing = ScaledLabelPadding.Top + ScaledLabelPadding.Bottom;
     const float BottomLabelHeight = BarChartStyle.bShowLabels ? FontHeight + LabelSpacing : 0.0f;
     const float TopValueHeight = BarChartStyle.bShowValues ? FontHeight + ValueSpacing : 0.0f;
-    const float AxisLabelWidth = BarChartStyle.bShowYAxis ? 32.0f : 0.0f;
+    const float TickMarkLength = BarChartStyle.bShowYAxis ? 4.0f * ChartScale : 0.0f;
+    const int32 TickCount = 4;
+    TArray<FText, TInlineAllocator<4>> TickTexts;
+    TArray<FVector2D, TInlineAllocator<4>> TickTextSizes;
+    float MaxTickTextWidth = 0.0f;
+
+    if (BarChartStyle.bShowYAxis)
+    {
+        TickTexts.Reserve(TickCount);
+        TickTextSizes.Reserve(TickCount);
+
+        for (int32 TickIndex = 1; TickIndex <= TickCount; ++TickIndex)
+        {
+            const float TickAlpha = static_cast<float>(TickIndex) / TickCount;
+            const FText TickText = FText::AsNumber(CachedMaxValue * TickAlpha);
+            const FVector2D TickTextSize = FontMeasure->Measure(TickText, ChartFont);
+            TickTexts.Add(TickText);
+            TickTextSizes.Add(TickTextSize);
+            MaxTickTextWidth = FMath::Max(MaxTickTextWidth, TickTextSize.X);
+        }
+    }
+
+    const float AxisLabelWidth = BarChartStyle.bShowYAxis
+        ? MaxTickTextWidth + TickMarkLength + ScaledLabelPadding.Left + ScaledLabelPadding.Right
+        : 0.0f;
     const float PlotLeft = ChartStyle.Padding.Left + AxisLabelWidth;
     const float PlotTop = ChartStyle.Padding.Top + TopValueHeight;
     const float PlotRight = LocalSize.X - ChartStyle.Padding.Right;
     const float PlotBottom = LocalSize.Y - ChartStyle.Padding.Bottom - BottomLabelHeight;
-    const float PlotWidth = PlotRight - PlotLeft;
-    const float PlotHeight = PlotBottom - PlotTop;
-    const float AvailableWidth = PlotWidth - (BarChartStyle.BarSpacing * (CachedBars.Num() - 1));
+    const float AvailablePlotWidth = PlotRight - PlotLeft;
+    const float AvailablePlotHeight = PlotBottom - PlotTop;
+    const float PlotWidth = AvailablePlotWidth * FMath::Min(ChartScale, 1.0f);
+    const float PlotHeight = AvailablePlotHeight * FMath::Min(ChartScale, 1.0f);
+    const float PlotOffsetX = FMath::Max((AvailablePlotWidth - PlotWidth) * 0.5f, 0.0f);
+    const float ScaledPlotLeft = PlotLeft + PlotOffsetX;
+    const float ScaledPlotRight = ScaledPlotLeft + PlotWidth;
+    const float ScaledPlotTop = PlotBottom - PlotHeight;
+    const float ScaledBarSpacing = BarChartStyle.BarSpacing * ChartScale;
+    const float AvailableWidth = PlotWidth - (ScaledBarSpacing * (CachedBars.Num() - 1));
     const float AvailableHeight = PlotHeight;
 
     if (PlotWidth <= 0.0f || PlotHeight <= 0.0f || AvailableWidth <= 0.0f || AvailableHeight <= 0.0f)
@@ -129,9 +185,9 @@ void SBarChart::EnsureCachedLayout(const FVector2D& LocalSize) const
     }
 
     const float BaseBarWidth = AvailableWidth / CachedBars.Num();
-    const float DesiredMinimumBarWidth = FMath::Max(0.0f, BarChartStyle.MinimumBarWidth);
+    const float DesiredMinimumBarWidth = FMath::Max(0.0f, BarChartStyle.MinimumBarWidth * ChartScale);
     const float DesiredMaximumBarWidth = BarChartStyle.MaximumBarWidth > 0.0f
-        ? FMath::Max(DesiredMinimumBarWidth, BarChartStyle.MaximumBarWidth)
+        ? FMath::Max(DesiredMinimumBarWidth, BarChartStyle.MaximumBarWidth * ChartScale)
         : 0.0f;
 
     float BarWidth = BaseBarWidth;
@@ -144,7 +200,7 @@ void SBarChart::EnsureCachedLayout(const FVector2D& LocalSize) const
     {
         const float MinimumWidthRequirement =
             (DesiredMinimumBarWidth * CachedBars.Num()) +
-            (BarChartStyle.BarSpacing * (CachedBars.Num() - 1));
+            (ScaledBarSpacing * (CachedBars.Num() - 1));
 
         if (MinimumWidthRequirement <= PlotWidth)
         {
@@ -159,25 +215,29 @@ void SBarChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     const float OccupiedWidth =
         (BarWidth * CachedBars.Num()) +
-        (BarChartStyle.BarSpacing * (CachedBars.Num() - 1));
-    const float BarStartX = PlotLeft + FMath::Max((PlotWidth - OccupiedWidth) * 0.5f, 0.0f);
+        (ScaledBarSpacing * (CachedBars.Num() - 1));
+    const float BarStartX = ScaledPlotLeft + FMath::Max((PlotWidth - OccupiedWidth) * 0.5f, 0.0f);
 
-    CachedPlotLeft = PlotLeft;
-    CachedPlotTop = PlotTop;
-    CachedPlotRight = PlotRight;
+    CachedPlotLeft = ScaledPlotLeft;
+    CachedPlotTop = ScaledPlotTop;
+    CachedPlotRight = ScaledPlotRight;
     CachedPlotBottom = PlotBottom;
 
-    const int32 TickCount = 4;
     CachedTickLayouts.Reserve(TickCount);
     for (int32 TickIndex = 1; TickIndex <= TickCount; ++TickIndex)
     {
         const float TickAlpha = static_cast<float>(TickIndex) / TickCount;
         FCachedTickLayout& TickLayout = CachedTickLayouts.AddDefaulted_GetRef();
         TickLayout.Y = PlotBottom - (TickAlpha * PlotHeight);
-        TickLayout.Text = FText::AsNumber(CachedMaxValue * TickAlpha);
-        TickLayout.TextPosition = FVector2D(
-            ChartStyle.Padding.Left,
-            TickLayout.Y - (FontHeight * 0.5f));
+        TickLayout.Text = BarChartStyle.bShowYAxis ? TickTexts[TickIndex - 1] : FText::GetEmpty();
+
+        if (BarChartStyle.bShowYAxis)
+        {
+            const FVector2D& TickTextSize = TickTextSizes[TickIndex - 1];
+            TickLayout.TextPosition = FVector2D(
+                ChartStyle.Padding.Left + ScaledLabelPadding.Left + FMath::Max(MaxTickTextWidth - TickTextSize.X, 0.0f),
+                TickLayout.Y - (TickTextSize.Y * 0.5f));
+        }
     }
 
     CachedBarLayouts.Reserve(CachedBars.Num());
@@ -185,35 +245,44 @@ void SBarChart::EnsureCachedLayout(const FVector2D& LocalSize) const
     {
         const FCachedBarData& CachedBar = CachedBars[Index];
         const float BarHeight = CachedBar.NormalizedValue * AvailableHeight;
-        const float BarX = BarStartX + (Index * (BarWidth + BarChartStyle.BarSpacing));
+        const float BarX = BarStartX + (Index * (BarWidth + ScaledBarSpacing));
         const float BarY = PlotBottom - BarHeight;
 
         FCachedBarLayout& BarLayout = CachedBarLayouts.AddDefaulted_GetRef();
         BarLayout.Position = FVector2D(BarX, BarY);
         BarLayout.Size = FVector2D(BarWidth, BarHeight);
+
         const FVector2D ValueTextSize = FontMeasure->Measure(CachedBar.ValueText, ChartFont);
         const float ValueX = BarX + FMath::Max((BarWidth - ValueTextSize.X) * 0.5f, 0.0f);
         const float ValueY = FMath::Max(
             ChartStyle.Padding.Top,
-            BarY - ValueTextSize.Y - ChartStyle.LabelPadding.Bottom);
+            BarY - ValueTextSize.Y - ScaledLabelPadding.Bottom);
         BarLayout.ValueTextPosition = FVector2D(ValueX, ValueY);
 
         const FVector2D LabelTextSize = FontMeasure->Measure(CachedBar.Label, ChartFont);
         const float LabelX = BarX + FMath::Max((BarWidth - LabelTextSize.X) * 0.5f, 0.0f);
-        BarLayout.LabelTextPosition = FVector2D(LabelX, PlotBottom + ChartStyle.LabelPadding.Top);
+        BarLayout.LabelTextPosition = FVector2D(LabelX, PlotBottom + ScaledLabelPadding.Top);
     }
 }
 
 FSlateFontInfo SBarChart::GetChartFont() const
 {
-    return ChartStyle.Font.Size > 0
+    FSlateFontInfo ChartFont = ChartStyle.Font.Size > 0
         ? ChartStyle.Font
         : FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 10);
+
+    ChartFont.Size = FMath::Max(1, FMath::RoundToInt(ChartFont.Size * GetTextScale(ChartStyle)));
+    return ChartFont;
 }
 
 FVector2D SBarChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
 {
-    return FVector2D(300.0f, 200.0f);
+    const float ChartScale = GetChartScale(ChartStyle);
+    const float TextScale = GetTextScale(ChartStyle);
+
+    return FVector2D(
+        (220.0f * ChartScale) + (80.0f * TextScale),
+        (120.0f * ChartScale) + (80.0f * TextScale));
 }
 
 int32 SBarChart::OnPaint(
@@ -226,6 +295,9 @@ int32 SBarChart::OnPaint(
     bool bParentEnabled) const
 {
     const FVector2D LocalSize = AllottedGeometry.GetLocalSize();
+    const float ChartScale = GetChartScale(ChartStyle);
+    const float AxisLineThickness = FMath::Max(1.0f, ChartScale);
+    const float TickMarkLength = 4.0f * ChartScale;
     const bool bHasValidBackground = ChartStyle.BackgroundColor.A > 0.0f;
     const int32 BackgroundLayer = LayerId;
     const int32 GridLayer = LayerId + (bHasValidBackground ? 1 : 0);
@@ -277,7 +349,7 @@ int32 SBarChart::OnPaint(
             DrawEffects,
             AxisColor,
             true,
-            1.0f);
+            AxisLineThickness);
     }
 
     for (const FCachedTickLayout& TickLayout : CachedTickLayouts)
@@ -295,13 +367,13 @@ int32 SBarChart::OnPaint(
                 DrawEffects,
                 GridColor,
                 true,
-                1.0f);
+                AxisLineThickness);
         }
 
         if (BarChartStyle.bShowYAxis)
         {
             TArray<FVector2f> TickPoints;
-            TickPoints.Add(FVector2f(CachedPlotLeft - 4.0f, TickLayout.Y));
+            TickPoints.Add(FVector2f(CachedPlotLeft - TickMarkLength, TickLayout.Y));
             TickPoints.Add(FVector2f(CachedPlotLeft, TickLayout.Y));
             FSlateDrawElement::MakeLines(
                 OutDrawElements,
@@ -311,7 +383,7 @@ int32 SBarChart::OnPaint(
                 DrawEffects,
                 AxisColor,
                 true,
-                1.0f);
+                AxisLineThickness);
 
             FSlateDrawElement::MakeText(
                 OutDrawElements,

@@ -26,6 +26,9 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.0.1]
 
+- Added shared chart and text scaling controls for both chart types, plus
+  configurable pie-chart legend spacing and responsive legend sizing.
+
 ## Notes
 
 - The first release came out on July 16, 2026.

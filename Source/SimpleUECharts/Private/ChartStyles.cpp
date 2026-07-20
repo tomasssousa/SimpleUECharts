@@ -8,6 +8,8 @@ FChartStyle::FChartStyle()
     , Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 10))
     , Padding(8.0f)
     , LabelPadding(4.0f)
+    , ChartScale(1.0f)
+    , TextScale(1.0f)
 {
 }
 
@@ -32,5 +34,6 @@ FPieChartStyle::FPieChartStyle()
     , bShowValues(true)
     , bShowPercentages(true)
     , bShowLegend(true)
+    , LegendSpacing(16.0f)
 {
 }
