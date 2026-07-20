@@ -19,8 +19,13 @@ All notable changes to this project will be documented in this file.
   `FPieChartStyle`.
 - Refactored both chart types to separate calculation from rendering and reuse
   cached chart/layout state during painting.
-- Updated the documentation set, including the roadmap-backed README rewrite
+- Cleaned up includes by moving public style default constructors out of the
+  exported header and removing a redundant include from the pie-chart render
+  implementation.
+- Updated the documentation set, including the roadmap-backed README rewrite.
+
+## [v0.0.1]
 
 ## Notes
 
-- The first release came out in the 16th of July 2026
+- The first release came out on July 16, 2026.

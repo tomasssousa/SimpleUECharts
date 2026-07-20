@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Fonts/SlateFontInfo.h"
-#include "Styling/CoreStyle.h"
 #include "ChartStyles.generated.h"
 
 USTRUCT(BlueprintType)
@@ -10,14 +9,7 @@ struct SIMPLEUECHARTS_API FChartStyle
 {
     GENERATED_BODY()
 
-    FChartStyle()
-        : BackgroundColor(FLinearColor::Transparent)
-        , TextColor(FLinearColor::White)
-        , Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"), 10))
-        , Padding(8.0f)
-        , LabelPadding(4.0f)
-    {
-    }
+    FChartStyle();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     FLinearColor BackgroundColor;
@@ -40,18 +32,7 @@ struct SIMPLEUECHARTS_API FBarChartStyle
 {
     GENERATED_BODY()
 
-    FBarChartStyle()
-        : BarSpacing(8.0f)
-        , MinimumBarWidth(8.0f)
-        , MaximumBarWidth(128.0f)
-        , bShowLabels(true)
-        , bShowValues(true)
-        , bShowYAxis(true)
-        , bShowGridLines(false)
-        , AxisColor(FLinearColor::White)
-        , GridLineColor(0.25f, 0.25f, 0.25f, 1.0f)
-    {
-    }
+    FBarChartStyle();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     float BarSpacing;
@@ -86,16 +67,7 @@ struct SIMPLEUECHARTS_API FPieChartStyle
 {
     GENERATED_BODY()
 
-    FPieChartStyle()
-        : StartAngle(0.0f)
-        , SliceSpacing(0.0f)
-        , InnerRadius(0.0f)
-        , bShowLabels(true)
-        , bShowValues(true)
-        , bShowPercentages(true)
-        , bShowLegend(true)
-    {
-    }
+    FPieChartStyle();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     float StartAngle;

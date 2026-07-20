@@ -2,7 +2,6 @@
 
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
-#include "Math/UnrealMathUtility.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/CoreStyle.h"
 

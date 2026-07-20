@@ -303,5 +303,7 @@ Out of scope for the current version:
 - The plugin uses native Slate drawing, including custom Slate vertices for pie
   slices.
 - The intended update model is event-driven rather than tick-driven.
+- Public style defaults are implemented in module source rather than inline in
+  the public header, which helps keep exported header dependencies narrower.
 - The project roadmap and planned milestones are documented in
   `docs/ROADMAP.md`.
