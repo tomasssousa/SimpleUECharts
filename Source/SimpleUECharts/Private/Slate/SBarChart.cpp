@@ -62,6 +62,20 @@ void SBarChart::SetChartStyle(const FChartStyle& InChartStyle)
 void SBarChart::SetBarChartStyle(const FBarChartStyle& InBarChartStyle)
 {
     BarChartStyle = InBarChartStyle;
+    BarChartStyle.HoverOpacityMultiplier = BarChartStyle.HoverOpacityMultiplier > KINDA_SMALL_NUMBER
+        ? BarChartStyle.HoverOpacityMultiplier
+        : 1.0f;
+
+    if (BarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
+    {
+        BarChartStyle.HoverTint.A = 1.0f;
+    }
+
+    if (BarChartStyle.HoverTint.Equals(FLinearColor::Transparent))
+    {
+        BarChartStyle.HoverTint = FLinearColor::White;
+    }
+
     ClearHover();
     RecalculateChart();
     InvalidateCachedLayout();
@@ -287,10 +301,32 @@ FSlateFontInfo SBarChart::GetChartFont() const
 
 int32 SBarChart::FindHoveredDataPointIndex(const FVector2D& LocalPosition) const
 {
+    if (!BarChartStyle.bEnableHover)
+    {
+        return INDEX_NONE;
+    }
+
+    for (int32 Index = 0; Index < CachedBarLayouts.Num(); ++Index)
+    {
+        const FCachedBarLayout& BarLayout = CachedBarLayouts[Index];
+        const FVector2D BarMin = BarLayout.Position;
+        const FVector2D BarMax = BarLayout.Position + BarLayout.Size;
+
+        if (BarLayout.Size.X > 0.0f &&
+            BarLayout.Size.Y > 0.0f &&
+            LocalPosition.X >= BarMin.X &&
+            LocalPosition.X <= BarMax.X &&
+            LocalPosition.Y >= BarMin.Y &&
+            LocalPosition.Y <= BarMax.Y)
+        {
+            return Index;
+        }
+    }
+
     return INDEX_NONE;
 }
 
-void SBarChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
+void SBarChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex, const FVector2D& LocalPosition)
 {
     if (HoveredDataPointIndex == NewHoveredDataPointIndex)
     {
@@ -298,13 +334,13 @@ void SBarChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
     }
 
     HoveredDataPointIndex = NewHoveredDataPointIndex;
-    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex);
+    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex, LocalPosition);
     Invalidate(EInvalidateWidgetReason::Paint);
 }
 
 void SBarChart::ClearHover()
 {
-    SetHoveredDataPointIndex(INDEX_NONE);
+    SetHoveredDataPointIndex(INDEX_NONE, FVector2D::ZeroVector);
 }
 
 FVector2D SBarChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
@@ -336,6 +372,7 @@ int32 SBarChart::OnPaint(
     const int32 BarLayer = GridLayer + 1;
     const int32 AxisLayer = GridLayer + 2;
     const int32 TextLayer = GridLayer + 3;
+    const int32 HoverLayer = GridLayer + 4;
     const ESlateDrawEffect DrawEffects = bParentEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
     const FLinearColor AxisColor = BarChartStyle.AxisColor * InWidgetStyle.GetColorAndOpacityTint();
     const FLinearColor GridColor = BarChartStyle.GridLineColor * InWidgetStyle.GetColorAndOpacityTint();
@@ -432,6 +469,13 @@ int32 SBarChart::OnPaint(
     {
         const FCachedBarData& CachedBar = CachedBars[Index];
         const FCachedBarLayout& BarLayout = CachedBarLayouts[Index];
+        FLinearColor BarColor = CachedBar.Color * InWidgetStyle.GetColorAndOpacityTint();
+
+        if (BarChartStyle.bEnableHover && HoveredDataPointIndex == Index)
+        {
+            BarColor = BarChartStyle.HoverTint * InWidgetStyle.GetColorAndOpacityTint();
+            BarColor.A *= BarChartStyle.HoverOpacityMultiplier;
+        }
 
         FSlateDrawElement::MakeBox(
             OutDrawElements,
@@ -439,7 +483,31 @@ int32 SBarChart::OnPaint(
             AllottedGeometry.ToPaintGeometry(BarLayout.Size, FSlateLayoutTransform(BarLayout.Position)),
             &WhiteBrush,
             DrawEffects,
-            CachedBar.Color * InWidgetStyle.GetColorAndOpacityTint());
+            BarColor);
+
+        if (BarChartStyle.bEnableHover && HoveredDataPointIndex == Index)
+        {
+            const float HoverLineThickness = FMath::Max(1.0f, ChartScale);
+            const FVector2D BarMin = BarLayout.Position;
+            const FVector2D BarMax = BarLayout.Position + BarLayout.Size;
+            TArray<FVector2f> OutlinePoints;
+            OutlinePoints.Reserve(5);
+            OutlinePoints.Add(FVector2f(BarMin.X, BarMin.Y));
+            OutlinePoints.Add(FVector2f(BarMax.X, BarMin.Y));
+            OutlinePoints.Add(FVector2f(BarMax.X, BarMax.Y));
+            OutlinePoints.Add(FVector2f(BarMin.X, BarMax.Y));
+            OutlinePoints.Add(FVector2f(BarMin.X, BarMin.Y));
+
+            FSlateDrawElement::MakeLines(
+                OutDrawElements,
+                HoverLayer,
+                AllottedGeometry.ToPaintGeometry(),
+                MoveTemp(OutlinePoints),
+                DrawEffects,
+                BarChartStyle.HoverTint * InWidgetStyle.GetColorAndOpacityTint(),
+                true,
+                HoverLineThickness);
+        }
 
         if (BarChartStyle.bShowValues)
         {
@@ -466,13 +534,33 @@ int32 SBarChart::OnPaint(
         }
     }
 
-    return TextLayer;
+    return HoverLayer;
+}
+
+void SBarChart::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    if (!BarChartStyle.bEnableHover)
+    {
+        ClearHover();
+        return;
+    }
+
+    EnsureCachedLayout(MyGeometry.GetLocalSize());
+    const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition), LocalPosition);
 }
 
 FReply SBarChart::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
+    if (!BarChartStyle.bEnableHover)
+    {
+        ClearHover();
+        return FReply::Unhandled();
+    }
+
+    EnsureCachedLayout(MyGeometry.GetLocalSize());
     const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
-    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition));
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition), LocalPosition);
     return FReply::Handled();
 }
 

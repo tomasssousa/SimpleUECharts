@@ -89,7 +89,7 @@ void UPieChartWidget::SynchronizePieChartProperties()
     }
 }
 
-void UPieChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex)
+void UPieChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex, FVector2D LocalPosition)
 {
     HoveredDataPointIndex = NewHoveredDataPointIndex;
 }

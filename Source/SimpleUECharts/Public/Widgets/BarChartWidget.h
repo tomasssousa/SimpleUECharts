@@ -2,6 +2,7 @@
 
 #include "Components/Widget.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartHover.h"
 #include "Data/ChartStyles.h"
 #include "BarChartWidget.generated.h"
 
@@ -46,6 +47,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "Chart|Hover")
     int32 GetHoveredDataPointIndex() const;
 
+    UFUNCTION(BlueprintPure, Category = "Chart|Hover")
+    FChartHoverInfo GetHoveredDataPoint() const;
+
+    UPROPERTY(BlueprintAssignable, Category = "Simple UE Charts|Events")
+    FOnChartDataPointHovered OnDataPointHovered;
+
+    UPROPERTY(BlueprintAssignable, Category = "Simple UE Charts|Events")
+    FOnChartHoverEnded OnHoverEnded;
+
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void SynchronizeProperties() override;
@@ -57,8 +67,9 @@ protected:
 
 private:
     void SynchronizeBarChartProperties();
-    void HandleSlateHoverChanged(int32 NewHoveredDataPointIndex);
+    void HandleSlateHoverChanged(int32 NewHoveredDataPointIndex, FVector2D LocalPosition);
 
     TSharedPtr<SBarChart> MyBarChart;
     int32 HoveredDataPointIndex = INDEX_NONE;
+    FChartHoverInfo HoveredDataPoint;
 };

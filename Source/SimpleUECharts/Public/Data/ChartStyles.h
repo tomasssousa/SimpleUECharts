@@ -66,6 +66,15 @@ struct SIMPLEUECHARTS_API FBarChartStyle
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     FLinearColor GridLineColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+    bool bEnableHover;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+    FLinearColor HoverTint;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "2.0"))
+    float HoverOpacityMultiplier;
 };
 
 USTRUCT(BlueprintType)

@@ -51,7 +51,7 @@ protected:
 
 private:
     void SynchronizePieChartProperties();
-    void HandleSlateHoverChanged(int32 NewHoveredDataPointIndex);
+    void HandleSlateHoverChanged(int32 NewHoveredDataPointIndex, FVector2D LocalPosition);
 
     TSharedPtr<SPieChart> MyPieChart;
     int32 HoveredDataPointIndex = INDEX_NONE;

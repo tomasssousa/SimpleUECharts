@@ -19,6 +19,10 @@ All notable changes to this project will be documented in this file.
   `FPieChartStyle`.
 - Refactored both chart types to separate calculation from rendering and reuse
   cached chart/layout state during painting.
+- Added the shared Slate-to-UMG hover infrastructure for chart widgets,
+  including pointer movement handling, hovered-index state, and hover cleanup.
+- Implemented Bar Chart hover detection, Blueprint hover events, hover data
+  exposure, and a non-layout-changing visual highlight for hovered bars.
 - Cleaned up includes by moving public style default constructors out of the
   exported header and removing a redundant include from the pie-chart render
   implementation.
@@ -28,8 +32,6 @@ All notable changes to this project will be documented in this file.
 
 - Added shared chart and text scaling controls for both chart types, plus
   configurable pie-chart legend spacing and responsive legend sizing.
-- Added the shared Slate-to-UMG hover infrastructure for chart widgets,
-  including pointer movement handling, hovered-index state, and hover cleanup.
 
 ## Notes
 

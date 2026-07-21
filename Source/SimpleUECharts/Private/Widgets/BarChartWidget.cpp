@@ -8,12 +8,15 @@
 void UBarChartWidget::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
+    HoveredDataPoint = FChartHoverInfo();
+    HoveredDataPointIndex = INDEX_NONE;
     RefreshChart();
 }
 
 void UBarChartWidget::ClearData()
 {
     Data.Reset();
+    HoveredDataPoint = FChartHoverInfo();
     HoveredDataPointIndex = INDEX_NONE;
     RefreshChart();
 }
@@ -56,9 +59,15 @@ int32 UBarChartWidget::GetHoveredDataPointIndex() const
     return HoveredDataPointIndex;
 }
 
+FChartHoverInfo UBarChartWidget::GetHoveredDataPoint() const
+{
+    return HoveredDataPoint;
+}
+
 TSharedRef<SWidget> UBarChartWidget::RebuildWidget()
 {
     HoveredDataPointIndex = INDEX_NONE;
+    HoveredDataPoint = FChartHoverInfo();
     SAssignNew(MyBarChart, SBarChart)
         .OnHoveredDataPointChanged(FOnSlateChartHoverChanged::CreateUObject(
             this,
@@ -80,6 +89,7 @@ void UBarChartWidget::ReleaseSlateResources(bool bReleaseChildren)
     Super::ReleaseSlateResources(bReleaseChildren);
     MyBarChart.Reset();
     HoveredDataPointIndex = INDEX_NONE;
+    HoveredDataPoint = FChartHoverInfo();
 }
 
 void UBarChartWidget::SynchronizeBarChartProperties()
@@ -94,6 +104,19 @@ void UBarChartWidget::SynchronizeBarChartProperties()
         ResolvedBarChartStyle.BarSpacing = FMath::Max(0.0f, ResolvedBarChartStyle.BarSpacing);
         ResolvedBarChartStyle.MinimumBarWidth = FMath::Max(0.0f, ResolvedBarChartStyle.MinimumBarWidth);
         ResolvedBarChartStyle.MaximumBarWidth = FMath::Max(0.0f, ResolvedBarChartStyle.MaximumBarWidth);
+        ResolvedBarChartStyle.HoverOpacityMultiplier = ResolvedBarChartStyle.HoverOpacityMultiplier > KINDA_SMALL_NUMBER
+            ? ResolvedBarChartStyle.HoverOpacityMultiplier
+            : 1.0f;
+
+        if (ResolvedBarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
+        {
+            ResolvedBarChartStyle.HoverTint.A = 1.0f;
+        }
+
+        if (ResolvedBarChartStyle.HoverTint.Equals(FLinearColor::Transparent))
+        {
+            ResolvedBarChartStyle.HoverTint = FLinearColor::White;
+        }
 
         if (ResolvedBarChartStyle.MaximumBarWidth > 0.0f &&
             ResolvedBarChartStyle.MinimumBarWidth > ResolvedBarChartStyle.MaximumBarWidth)
@@ -106,9 +129,26 @@ void UBarChartWidget::SynchronizeBarChartProperties()
     }
 }
 
-void UBarChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex)
+void UBarChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex, FVector2D LocalPosition)
 {
     HoveredDataPointIndex = NewHoveredDataPointIndex;
+
+    if (!Data.IsValidIndex(NewHoveredDataPointIndex))
+    {
+        HoveredDataPoint = FChartHoverInfo();
+        OnHoverEnded.Broadcast();
+        return;
+    }
+
+    const FChartDataPoint& Point = Data[NewHoveredDataPointIndex];
+    HoveredDataPoint = FChartHoverInfo();
+    HoveredDataPoint.DataPointIndex = NewHoveredDataPointIndex;
+    HoveredDataPoint.Label = Point.Label;
+    HoveredDataPoint.Value = Point.Value;
+    HoveredDataPoint.Percentage = 0.0f;
+    HoveredDataPoint.LocalPosition = LocalPosition;
+
+    OnDataPointHovered.Broadcast(HoveredDataPoint);
 }
 
 #if WITH_EDITOR

@@ -23,6 +23,9 @@ FBarChartStyle::FBarChartStyle()
     , bShowGridLines(false)
     , AxisColor(FLinearColor::White)
     , GridLineColor(0.25f, 0.25f, 0.25f, 1.0f)
+    , bEnableHover(true)
+    , HoverTint(FLinearColor::White)
+    , HoverOpacityMultiplier(1.0f)
 {
 }
 

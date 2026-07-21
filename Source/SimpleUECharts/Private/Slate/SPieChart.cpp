@@ -485,7 +485,7 @@ int32 SPieChart::FindHoveredDataPointIndex(const FVector2D& LocalPosition) const
     return INDEX_NONE;
 }
 
-void SPieChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
+void SPieChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex, const FVector2D& LocalPosition)
 {
     if (HoveredDataPointIndex == NewHoveredDataPointIndex)
     {
@@ -493,13 +493,13 @@ void SPieChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
     }
 
     HoveredDataPointIndex = NewHoveredDataPointIndex;
-    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex);
+    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex, LocalPosition);
     Invalidate(EInvalidateWidgetReason::Paint);
 }
 
 void SPieChart::ClearHover()
 {
-    SetHoveredDataPointIndex(INDEX_NONE);
+    SetHoveredDataPointIndex(INDEX_NONE, FVector2D::ZeroVector);
 }
 
 FVector2D SPieChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
@@ -632,7 +632,7 @@ int32 SPieChart::OnPaint(
 FReply SPieChart::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
     const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
-    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition));
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition), LocalPosition);
     return FReply::Handled();
 }
 

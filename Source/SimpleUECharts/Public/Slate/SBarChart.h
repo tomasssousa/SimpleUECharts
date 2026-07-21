@@ -32,6 +32,7 @@ public:
         const FWidgetStyle& InWidgetStyle,
         bool bParentEnabled) const override;
 
+    virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
     virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
     virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
 
@@ -65,7 +66,7 @@ private:
     void EnsureCachedLayout(const FVector2D& LocalSize) const;
     FSlateFontInfo GetChartFont() const;
     int32 FindHoveredDataPointIndex(const FVector2D& LocalPosition) const;
-    void SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex);
+    void SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex, const FVector2D& LocalPosition);
     void ClearHover();
 
     TArray<FChartDataPoint> Data;
