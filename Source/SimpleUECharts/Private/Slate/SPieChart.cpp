@@ -74,12 +74,14 @@ FMargin ScaleMargin(const FMargin& InMargin, float Scale)
 
 void SPieChart::Construct(const FArguments& InArgs)
 {
+    OnHoveredDataPointChanged = InArgs._OnHoveredDataPointChanged;
     RecalculateChart();
 }
 
 void SPieChart::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
+    ClearHover();
     RecalculateChart();
     Invalidate(EInvalidateWidgetReason::Paint);
 }
@@ -87,6 +89,7 @@ void SPieChart::SetData(const TArray<FChartDataPoint>& NewData)
 void SPieChart::ClearData()
 {
     Data.Reset();
+    ClearHover();
     ResetCalculatedState();
     Invalidate(EInvalidateWidgetReason::Paint);
 }
@@ -94,6 +97,7 @@ void SPieChart::ClearData()
 void SPieChart::SetChartStyle(const FChartStyle& InChartStyle)
 {
     ChartStyle = InChartStyle;
+    ClearHover();
     InvalidateCachedLayout();
     Invalidate(EInvalidateWidgetReason::Paint);
 }
@@ -101,9 +105,15 @@ void SPieChart::SetChartStyle(const FChartStyle& InChartStyle)
 void SPieChart::SetPieChartStyle(const FPieChartStyle& InPieChartStyle)
 {
     PieChartStyle = InPieChartStyle;
+    ClearHover();
     RecalculateChart();
     InvalidateCachedLayout();
     Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+int32 SPieChart::GetHoveredDataPointIndex() const
+{
+    return HoveredDataPointIndex;
 }
 
 void SPieChart::RecalculateChart()
@@ -470,6 +480,28 @@ FSlateFontInfo SPieChart::GetChartFont() const
     return ChartFont;
 }
 
+int32 SPieChart::FindHoveredDataPointIndex(const FVector2D& LocalPosition) const
+{
+    return INDEX_NONE;
+}
+
+void SPieChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
+{
+    if (HoveredDataPointIndex == NewHoveredDataPointIndex)
+    {
+        return;
+    }
+
+    HoveredDataPointIndex = NewHoveredDataPointIndex;
+    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex);
+    Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+void SPieChart::ClearHover()
+{
+    SetHoveredDataPointIndex(INDEX_NONE);
+}
+
 FVector2D SPieChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
 {
     const float ChartScale = GetChartScale(ChartStyle);
@@ -595,4 +627,16 @@ int32 SPieChart::OnPaint(
     }
 
     return LayerId + (bHasValidBackground ? 2 : 1);
+}
+
+FReply SPieChart::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition));
+    return FReply::Handled();
+}
+
+void SPieChart::OnMouseLeave(const FPointerEvent& MouseEvent)
+{
+    ClearHover();
 }

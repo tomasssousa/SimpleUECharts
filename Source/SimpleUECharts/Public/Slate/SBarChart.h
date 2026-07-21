@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/ChartDataPoint.h"
+#include "Data/ChartHover.h"
 #include "Data/ChartStyles.h"
 #include "Widgets/SLeafWidget.h"
 
@@ -9,6 +10,7 @@ class SIMPLEUECHARTS_API SBarChart : public SLeafWidget
 {
 public:
     SLATE_BEGIN_ARGS(SBarChart) {}
+        SLATE_EVENT(FOnSlateChartHoverChanged, OnHoveredDataPointChanged)
     SLATE_END_ARGS()
 
     void Construct(const FArguments& InArgs);
@@ -17,6 +19,7 @@ public:
     void ClearData();
     void SetChartStyle(const FChartStyle& InChartStyle);
     void SetBarChartStyle(const FBarChartStyle& InBarChartStyle);
+    int32 GetHoveredDataPointIndex() const;
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -28,6 +31,9 @@ public:
         int32 LayerId,
         const FWidgetStyle& InWidgetStyle,
         bool bParentEnabled) const override;
+
+    virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+    virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
 
 private:
     struct FCachedBarData
@@ -58,12 +64,17 @@ private:
     void InvalidateCachedLayout();
     void EnsureCachedLayout(const FVector2D& LocalSize) const;
     FSlateFontInfo GetChartFont() const;
+    int32 FindHoveredDataPointIndex(const FVector2D& LocalPosition) const;
+    void SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex);
+    void ClearHover();
 
     TArray<FChartDataPoint> Data;
     TArray<FCachedBarData> CachedBars;
     FChartStyle ChartStyle;
     FBarChartStyle BarChartStyle;
     float CachedMaxValue = 0.0f;
+    int32 HoveredDataPointIndex = INDEX_NONE;
+    FOnSlateChartHoverChanged OnHoveredDataPointChanged;
     mutable bool bLayoutDirty = true;
     mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);
     mutable float CachedPlotLeft = 0.0f;

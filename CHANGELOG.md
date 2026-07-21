@@ -28,6 +28,8 @@ All notable changes to this project will be documented in this file.
 
 - Added shared chart and text scaling controls for both chart types, plus
   configurable pie-chart legend spacing and responsive legend sizing.
+- Added the shared Slate-to-UMG hover infrastructure for chart widgets,
+  including pointer movement handling, hovered-index state, and hover cleanup.
 
 ## Notes
 

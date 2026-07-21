@@ -14,6 +14,7 @@ void UBarChartWidget::SetData(const TArray<FChartDataPoint>& NewData)
 void UBarChartWidget::ClearData()
 {
     Data.Reset();
+    HoveredDataPointIndex = INDEX_NONE;
     RefreshChart();
 }
 
@@ -50,9 +51,18 @@ void UBarChartWidget::RefreshChart()
     }
 }
 
+int32 UBarChartWidget::GetHoveredDataPointIndex() const
+{
+    return HoveredDataPointIndex;
+}
+
 TSharedRef<SWidget> UBarChartWidget::RebuildWidget()
 {
-    SAssignNew(MyBarChart, SBarChart);
+    HoveredDataPointIndex = INDEX_NONE;
+    SAssignNew(MyBarChart, SBarChart)
+        .OnHoveredDataPointChanged(FOnSlateChartHoverChanged::CreateUObject(
+            this,
+            &UBarChartWidget::HandleSlateHoverChanged));
     SynchronizeBarChartProperties();
     MyBarChart->SetData(Data);
 
@@ -69,6 +79,7 @@ void UBarChartWidget::ReleaseSlateResources(bool bReleaseChildren)
 {
     Super::ReleaseSlateResources(bReleaseChildren);
     MyBarChart.Reset();
+    HoveredDataPointIndex = INDEX_NONE;
 }
 
 void UBarChartWidget::SynchronizeBarChartProperties()
@@ -93,6 +104,11 @@ void UBarChartWidget::SynchronizeBarChartProperties()
         MyBarChart->SetChartStyle(ResolvedChartStyle);
         MyBarChart->SetBarChartStyle(ResolvedBarChartStyle);
     }
+}
+
+void UBarChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex)
+{
+    HoveredDataPointIndex = NewHoveredDataPointIndex;
 }
 
 #if WITH_EDITOR

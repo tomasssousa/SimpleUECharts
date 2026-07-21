@@ -30,12 +30,14 @@ FMargin ScaleMargin(const FMargin& InMargin, float Scale)
 
 void SBarChart::Construct(const FArguments& InArgs)
 {
+    OnHoveredDataPointChanged = InArgs._OnHoveredDataPointChanged;
     RecalculateChart();
 }
 
 void SBarChart::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
+    ClearHover();
     RecalculateChart();
     Invalidate(EInvalidateWidgetReason::Paint);
 }
@@ -43,6 +45,7 @@ void SBarChart::SetData(const TArray<FChartDataPoint>& NewData)
 void SBarChart::ClearData()
 {
     Data.Reset();
+    ClearHover();
     RecalculateChart();
     Invalidate(EInvalidateWidgetReason::Paint);
 }
@@ -50,6 +53,7 @@ void SBarChart::ClearData()
 void SBarChart::SetChartStyle(const FChartStyle& InChartStyle)
 {
     ChartStyle = InChartStyle;
+    ClearHover();
     RecalculateChart();
     InvalidateCachedLayout();
     Invalidate(EInvalidateWidgetReason::Paint);
@@ -58,9 +62,15 @@ void SBarChart::SetChartStyle(const FChartStyle& InChartStyle)
 void SBarChart::SetBarChartStyle(const FBarChartStyle& InBarChartStyle)
 {
     BarChartStyle = InBarChartStyle;
+    ClearHover();
     RecalculateChart();
     InvalidateCachedLayout();
     Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+int32 SBarChart::GetHoveredDataPointIndex() const
+{
+    return HoveredDataPointIndex;
 }
 
 void SBarChart::RecalculateChart()
@@ -275,6 +285,28 @@ FSlateFontInfo SBarChart::GetChartFont() const
     return ChartFont;
 }
 
+int32 SBarChart::FindHoveredDataPointIndex(const FVector2D& LocalPosition) const
+{
+    return INDEX_NONE;
+}
+
+void SBarChart::SetHoveredDataPointIndex(int32 NewHoveredDataPointIndex)
+{
+    if (HoveredDataPointIndex == NewHoveredDataPointIndex)
+    {
+        return;
+    }
+
+    HoveredDataPointIndex = NewHoveredDataPointIndex;
+    OnHoveredDataPointChanged.ExecuteIfBound(HoveredDataPointIndex);
+    Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+void SBarChart::ClearHover()
+{
+    SetHoveredDataPointIndex(INDEX_NONE);
+}
+
 FVector2D SBarChart::ComputeDesiredSize(float LayoutScaleMultiplier) const
 {
     const float ChartScale = GetChartScale(ChartStyle);
@@ -435,4 +467,16 @@ int32 SBarChart::OnPaint(
     }
 
     return TextLayer;
+}
+
+FReply SBarChart::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition));
+    return FReply::Handled();
+}
+
+void SBarChart::OnMouseLeave(const FPointerEvent& MouseEvent)
+{
+    ClearHover();
 }

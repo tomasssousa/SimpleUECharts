@@ -14,6 +14,7 @@ void UPieChartWidget::SetData(const TArray<FChartDataPoint>& NewData)
 void UPieChartWidget::ClearData()
 {
     Data.Reset();
+    HoveredDataPointIndex = INDEX_NONE;
     RefreshChart();
 }
 
@@ -38,9 +39,18 @@ void UPieChartWidget::RefreshChart()
     }
 }
 
+int32 UPieChartWidget::GetHoveredDataPointIndex() const
+{
+    return HoveredDataPointIndex;
+}
+
 TSharedRef<SWidget> UPieChartWidget::RebuildWidget()
 {
-    SAssignNew(MyPieChart, SPieChart);
+    HoveredDataPointIndex = INDEX_NONE;
+    SAssignNew(MyPieChart, SPieChart)
+        .OnHoveredDataPointChanged(FOnSlateChartHoverChanged::CreateUObject(
+            this,
+            &UPieChartWidget::HandleSlateHoverChanged));
     SynchronizePieChartProperties();
     MyPieChart->SetData(Data);
 
@@ -57,6 +67,7 @@ void UPieChartWidget::ReleaseSlateResources(bool bReleaseChildren)
 {
     Super::ReleaseSlateResources(bReleaseChildren);
     MyPieChart.Reset();
+    HoveredDataPointIndex = INDEX_NONE;
 }
 
 void UPieChartWidget::SynchronizePieChartProperties()
@@ -76,6 +87,11 @@ void UPieChartWidget::SynchronizePieChartProperties()
         MyPieChart->SetChartStyle(ResolvedChartStyle);
         MyPieChart->SetPieChartStyle(ResolvedPieChartStyle);
     }
+}
+
+void UPieChartWidget::HandleSlateHoverChanged(int32 NewHoveredDataPointIndex)
+{
+    HoveredDataPointIndex = NewHoveredDataPointIndex;
 }
 
 #if WITH_EDITOR

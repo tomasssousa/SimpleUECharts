@@ -37,6 +37,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Chart")
     void RefreshChart();
 
+    UFUNCTION(BlueprintPure, Category = "Chart|Hover")
+    int32 GetHoveredDataPointIndex() const;
+
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void SynchronizeProperties() override;
@@ -48,6 +51,8 @@ protected:
 
 private:
     void SynchronizePieChartProperties();
+    void HandleSlateHoverChanged(int32 NewHoveredDataPointIndex);
 
     TSharedPtr<SPieChart> MyPieChart;
+    int32 HoveredDataPointIndex = INDEX_NONE;
 };
