@@ -108,14 +108,13 @@ void UBarChartWidget::SynchronizeBarChartProperties()
             ? ResolvedBarChartStyle.HoverOpacityMultiplier
             : 1.0f;
 
-        if (ResolvedBarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
-        {
-            ResolvedBarChartStyle.HoverTint.A = 1.0f;
-        }
-
         if (ResolvedBarChartStyle.HoverTint.Equals(FLinearColor::Transparent))
         {
             ResolvedBarChartStyle.HoverTint = FLinearColor::White;
+        }
+        else if (ResolvedBarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
+        {
+            ResolvedBarChartStyle.HoverTint.A = 1.0f;
         }
 
         if (ResolvedBarChartStyle.MaximumBarWidth > 0.0f &&

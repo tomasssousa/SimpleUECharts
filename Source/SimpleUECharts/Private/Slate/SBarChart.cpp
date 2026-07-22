@@ -66,14 +66,13 @@ void SBarChart::SetBarChartStyle(const FBarChartStyle& InBarChartStyle)
         ? BarChartStyle.HoverOpacityMultiplier
         : 1.0f;
 
-    if (BarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
-    {
-        BarChartStyle.HoverTint.A = 1.0f;
-    }
-
     if (BarChartStyle.HoverTint.Equals(FLinearColor::Transparent))
     {
         BarChartStyle.HoverTint = FLinearColor::White;
+    }
+    else if (BarChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
+    {
+        BarChartStyle.HoverTint.A = 1.0f;
     }
 
     ClearHover();

@@ -8,6 +8,7 @@
 namespace
 {
 constexpr float BaseLegendSwatchSize = 10.0f;
+constexpr float FullCircleRadians = 2.0f * UE_PI;
 
 int32 CalculateSliceSegmentCount(float SweepAngleRadians, float Radius)
 {
@@ -70,6 +71,21 @@ FMargin ScaleMargin(const FMargin& InMargin, float Scale)
         InMargin.Right * Scale,
         InMargin.Bottom * Scale);
 }
+
+float NormalizeAngleForRange(float AngleRadians, float RangeStartRadians)
+{
+    while (AngleRadians < RangeStartRadians)
+    {
+        AngleRadians += FullCircleRadians;
+    }
+
+    while (AngleRadians >= RangeStartRadians + FullCircleRadians)
+    {
+        AngleRadians -= FullCircleRadians;
+    }
+
+    return AngleRadians;
+}
 }
 
 void SPieChart::Construct(const FArguments& InArgs)
@@ -105,6 +121,19 @@ void SPieChart::SetChartStyle(const FChartStyle& InChartStyle)
 void SPieChart::SetPieChartStyle(const FPieChartStyle& InPieChartStyle)
 {
     PieChartStyle = InPieChartStyle;
+    PieChartStyle.HoverOpacityMultiplier = PieChartStyle.HoverOpacityMultiplier > KINDA_SMALL_NUMBER
+        ? PieChartStyle.HoverOpacityMultiplier
+        : 1.0f;
+
+    if (PieChartStyle.HoverTint.Equals(FLinearColor::Transparent))
+    {
+        PieChartStyle.HoverTint = FLinearColor::White;
+    }
+    else if (PieChartStyle.HoverTint.A <= KINDA_SMALL_NUMBER)
+    {
+        PieChartStyle.HoverTint.A = 1.0f;
+    }
+
     ClearHover();
     RecalculateChart();
     InvalidateCachedLayout();
@@ -149,7 +178,6 @@ void SPieChart::RecalculateChart()
         return;
     }
 
-    constexpr float FullCircleRadians = 2.0f * UE_PI;
     const float StartAngleRadians = FMath::DegreesToRadians(PieChartStyle.StartAngle);
     const float FullCircleEndRadians = StartAngleRadians + FullCircleRadians;
     float CurrentAngleRadians = StartAngleRadians;
@@ -193,8 +221,13 @@ void SPieChart::InvalidateCachedLayout()
 {
     bLayoutDirty = true;
     CachedLocalSize = FVector2D(-1.0f, -1.0f);
+    CachedPieCenter = FVector2D::ZeroVector;
+    CachedOuterRadius = 0.0f;
+    CachedInnerRadius = 0.0f;
     CachedVertices.Reset();
     CachedIndices.Reset();
+    CachedVertexDataPointIndices.Reset();
+    CachedSliceHitTests.Reset();
     CachedLegendEntries.Reset();
 }
 
@@ -207,8 +240,13 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     bLayoutDirty = false;
     CachedLocalSize = LocalSize;
+    CachedPieCenter = FVector2D::ZeroVector;
+    CachedOuterRadius = 0.0f;
+    CachedInnerRadius = 0.0f;
     CachedVertices.Reset();
     CachedIndices.Reset();
+    CachedVertexDataPointIndices.Reset();
+    CachedSliceHitTests.Reset();
     CachedLegendEntries.Reset();
 
     if (CalculatedSlices.IsEmpty() || LocalSize.X <= 0.0f || LocalSize.Y <= 0.0f)
@@ -277,6 +315,9 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         ChartStyle.Padding.Left + Radius + (AvailablePieOffsetX * PieAlignment),
         ChartStyle.Padding.Top + (PieAreaHeight * 0.5f));
     const float InnerRadiusPixels = PieChartStyle.InnerRadius * Radius;
+    CachedPieCenter = FVector2D(Center.X, Center.Y);
+    CachedOuterRadius = Radius;
+    CachedInnerRadius = InnerRadiusPixels;
 
     const FSlateBrush* WhiteBrush = FCoreStyle::Get().GetBrush(TEXT("GenericWhiteBox"));
     if (WhiteBrush == nullptr)
@@ -318,6 +359,14 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     CachedVertices.Reserve(EstimatedVertexCount);
     CachedIndices.Reserve(EstimatedIndexCount);
+    CachedVertexDataPointIndices.Reserve(EstimatedVertexCount);
+    CachedSliceHitTests.Reserve(CalculatedSlices.Num());
+
+    auto AddCachedVertex = [this](const FSlateVertex& Vertex, int32 SourceIndex)
+    {
+        CachedVertices.Add(Vertex);
+        CachedVertexDataPointIndices.Add(SourceIndex);
+    };
 
     for (const FPieSlice& Slice : CalculatedSlices)
     {
@@ -337,6 +386,11 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
         const int32 SegmentCount = CalculateSliceSegmentCount(RenderSweep, Radius);
         const FColor SliceColor = Slice.Color.ToFColor(true);
+
+        FCachedSliceHitTest& SliceHitTest = CachedSliceHitTests.AddDefaulted_GetRef();
+        SliceHitTest.SourceIndex = Slice.SourceIndex;
+        SliceHitTest.StartAngleRadians = RenderStartAngle;
+        SliceHitTest.EndAngleRadians = RenderEndAngle;
 
         if (InnerRadiusPixels > KINDA_SMALL_NUMBER)
         {
@@ -359,16 +413,18 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
                 const FVector2f OuterTexCoord = FVector2f(0.5f) + (UnitDirection * 0.5f);
                 const FVector2f InnerTexCoord = FVector2f(0.5f) + (UnitDirection * (0.5f * PieChartStyle.InnerRadius));
 
-                CachedVertices.Add(FSlateVertex::Make(
+                AddCachedVertex(FSlateVertex::Make(
                     RenderTransform,
                     OuterPosition,
                     FVector2f(UVStart.X + (UVSize.X * OuterTexCoord.X), UVStart.Y + (UVSize.Y * OuterTexCoord.Y)),
-                    SliceColor));
-                CachedVertices.Add(FSlateVertex::Make(
+                    SliceColor),
+                    Slice.SourceIndex);
+                AddCachedVertex(FSlateVertex::Make(
                     RenderTransform,
                     InnerPosition,
                     FVector2f(UVStart.X + (UVSize.X * InnerTexCoord.X), UVStart.Y + (UVSize.Y * InnerTexCoord.Y)),
-                    SliceColor));
+                    SliceColor),
+                    Slice.SourceIndex);
             }
 
             for (int32 SegmentIndex = 0; SegmentIndex < SegmentCount; ++SegmentIndex)
@@ -390,11 +446,12 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         else
         {
             const SlateIndex CenterIndex = static_cast<SlateIndex>(CachedVertices.Num());
-            CachedVertices.Add(FSlateVertex::Make(
+            AddCachedVertex(FSlateVertex::Make(
                 RenderTransform,
                 Center,
                 FVector2f(UVStart.X + (UVSize.X * 0.5f), UVStart.Y + (UVSize.Y * 0.5f)),
-                SliceColor));
+                SliceColor),
+                Slice.SourceIndex);
 
             for (int32 SegmentIndex = 0; SegmentIndex <= SegmentCount; ++SegmentIndex)
             {
@@ -411,11 +468,12 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
                 const FVector2f Position = Center + (UnitDirection * Radius);
                 const FVector2f TexCoord = FVector2f(0.5f) + (UnitDirection * 0.5f);
 
-                CachedVertices.Add(FSlateVertex::Make(
+                AddCachedVertex(FSlateVertex::Make(
                     RenderTransform,
                     Position,
                     FVector2f(UVStart.X + (UVSize.X * TexCoord.X), UVStart.Y + (UVSize.Y * TexCoord.Y)),
-                    SliceColor));
+                    SliceColor),
+                    Slice.SourceIndex);
             }
 
             for (int32 SegmentIndex = 0; SegmentIndex < SegmentCount; ++SegmentIndex)
@@ -482,6 +540,38 @@ FSlateFontInfo SPieChart::GetChartFont() const
 
 int32 SPieChart::FindHoveredDataPointIndex(const FVector2D& LocalPosition) const
 {
+    if (!PieChartStyle.bEnableHover ||
+        CachedSliceHitTests.IsEmpty() ||
+        CachedOuterRadius <= KINDA_SMALL_NUMBER)
+    {
+        return INDEX_NONE;
+    }
+
+    const FVector2D Delta = LocalPosition - CachedPieCenter;
+    const float Distance = Delta.Size();
+    if (Distance > CachedOuterRadius || Distance < CachedInnerRadius)
+    {
+        return INDEX_NONE;
+    }
+
+    if (Distance <= KINDA_SMALL_NUMBER && CachedInnerRadius <= KINDA_SMALL_NUMBER)
+    {
+        return CachedSliceHitTests.Num() == 1 ? CachedSliceHitTests[0].SourceIndex : INDEX_NONE;
+    }
+
+    const float PointerAngleRadians = NormalizeAngleForRange(
+        FMath::Atan2(Delta.Y, Delta.X),
+        CachedSliceHitTests[0].StartAngleRadians);
+
+    for (const FCachedSliceHitTest& SliceHitTest : CachedSliceHitTests)
+    {
+        if (PointerAngleRadians >= SliceHitTest.StartAngleRadians &&
+            PointerAngleRadians <= SliceHitTest.EndAngleRadians)
+        {
+            return SliceHitTest.SourceIndex;
+        }
+    }
+
     return INDEX_NONE;
 }
 
@@ -565,9 +655,19 @@ int32 SPieChart::OnPaint(
     TArray<FSlateVertex> TransformedVertices;
     TransformedVertices.Reserve(CachedVertices.Num());
 
-    for (const FSlateVertex& Vertex : CachedVertices)
+    for (int32 VertexIndex = 0; VertexIndex < CachedVertices.Num(); ++VertexIndex)
     {
-        const FLinearColor VertexColor = Vertex.Color.ReinterpretAsLinear() * Tint;
+        const FSlateVertex& Vertex = CachedVertices[VertexIndex];
+        FLinearColor VertexColor = Vertex.Color.ReinterpretAsLinear() * Tint;
+
+        if (PieChartStyle.bEnableHover &&
+            CachedVertexDataPointIndices.IsValidIndex(VertexIndex) &&
+            CachedVertexDataPointIndices[VertexIndex] == HoveredDataPointIndex)
+        {
+            VertexColor = PieChartStyle.HoverTint * Tint;
+            VertexColor.A *= PieChartStyle.HoverOpacityMultiplier;
+        }
+
         TransformedVertices.Add(FSlateVertex::Make(
             RenderTransform,
             Vertex.Position,
@@ -631,9 +731,29 @@ int32 SPieChart::OnPaint(
 
 FReply SPieChart::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
+    if (!PieChartStyle.bEnableHover)
+    {
+        ClearHover();
+        return FReply::Unhandled();
+    }
+
+    EnsureCachedLayout(MyGeometry.GetLocalSize());
     const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
     SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition), LocalPosition);
     return FReply::Handled();
+}
+
+void SPieChart::OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    if (!PieChartStyle.bEnableHover)
+    {
+        ClearHover();
+        return;
+    }
+
+    EnsureCachedLayout(MyGeometry.GetLocalSize());
+    const FVector2D LocalPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+    SetHoveredDataPointIndex(FindHoveredDataPointIndex(LocalPosition), LocalPosition);
 }
 
 void SPieChart::OnMouseLeave(const FPointerEvent& MouseEvent)

@@ -33,6 +33,7 @@ public:
         const FWidgetStyle& InWidgetStyle,
         bool bParentEnabled) const override;
 
+    virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
     virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
     virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override;
 
@@ -58,6 +59,13 @@ private:
         FVector2D ValueTextPosition = FVector2D::ZeroVector;
     };
 
+    struct FCachedSliceHitTest
+    {
+        int32 SourceIndex = INDEX_NONE;
+        float StartAngleRadians = 0.0f;
+        float EndAngleRadians = 0.0f;
+    };
+
     void RecalculateChart();
     void ResetCalculatedState();
     void InvalidateCachedLayout();
@@ -76,7 +84,12 @@ private:
     FOnSlateChartHoverChanged OnHoveredDataPointChanged;
     mutable bool bLayoutDirty = true;
     mutable FVector2D CachedLocalSize = FVector2D(-1.0f, -1.0f);
+    mutable FVector2D CachedPieCenter = FVector2D::ZeroVector;
+    mutable float CachedOuterRadius = 0.0f;
+    mutable float CachedInnerRadius = 0.0f;
     mutable TArray<FSlateVertex> CachedVertices;
     mutable TArray<SlateIndex> CachedIndices;
+    mutable TArray<int32> CachedVertexDataPointIndices;
+    mutable TArray<FCachedSliceHitTest> CachedSliceHitTests;
     mutable TArray<FCachedLegendEntry> CachedLegendEntries;
 };

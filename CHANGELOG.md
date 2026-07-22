@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
   including pointer movement handling, hovered-index state, and hover cleanup.
 - Implemented Bar Chart hover detection, Blueprint hover events, hover data
   exposure, and a non-layout-changing visual highlight for hovered bars.
+- Implemented Pie Chart hover detection, Blueprint hover events, hover data
+  exposure, donut-aware hit testing, and hover highlighting for hovered slices.
 - Cleaned up includes by moving public style default constructors out of the
   exported header and removing a redundant include from the pie-chart render
   implementation.

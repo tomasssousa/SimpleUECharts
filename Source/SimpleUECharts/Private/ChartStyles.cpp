@@ -39,5 +39,8 @@ FPieChartStyle::FPieChartStyle()
     , bShowPercentages(true)
     , bShowLegend(true)
     , LegendSpacing(16.0f)
+    , bEnableHover(true)
+    , HoverTint(FLinearColor::White)
+    , HoverOpacityMultiplier(1.0f)
 {
 }

@@ -110,4 +110,13 @@ struct SIMPLEUECHARTS_API FPieChartStyle
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "64.0"))
     float LegendSpacing;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+    bool bEnableHover;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover")
+    FLinearColor HoverTint;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hover", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "2.0"))
+    float HoverOpacityMultiplier;
 };
