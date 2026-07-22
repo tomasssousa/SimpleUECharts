@@ -6,28 +6,6 @@
 #include "Styling/CoreStyle.h"
 #include "Rendering/DrawElements.h"
 
-namespace
-{
-float GetChartScale(const FChartStyle& InChartStyle)
-{
-    return FMath::Max(0.1f, InChartStyle.ChartScale);
-}
-
-float GetTextScale(const FChartStyle& InChartStyle)
-{
-    return FMath::Max(0.1f, InChartStyle.TextScale);
-}
-
-FMargin ScaleMargin(const FMargin& InMargin, float Scale)
-{
-    return FMargin(
-        InMargin.Left * Scale,
-        InMargin.Top * Scale,
-        InMargin.Right * Scale,
-        InMargin.Bottom * Scale);
-}
-}
-
 void SBarChart::Construct(const FArguments& InArgs)
 {
     RecalculateChart();

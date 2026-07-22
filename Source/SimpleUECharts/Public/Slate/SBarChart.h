@@ -29,6 +29,25 @@ public:
         const FWidgetStyle& InWidgetStyle,
         bool bParentEnabled) const override;
 
+    float GetChartScale(const FChartStyle& InChartStyle) const
+    {
+        return FMath::Max(0.1f, InChartStyle.ChartScale);
+    }
+
+    float GetTextScale(const FChartStyle& InChartStyle) const
+    {
+        return FMath::Max(0.1f, InChartStyle.TextScale);
+    }
+
+    FMargin ScaleMargin(const FMargin& InMargin, float Scale) const
+    {
+        return FMargin(
+            InMargin.Left * Scale,
+            InMargin.Top * Scale,
+            InMargin.Right * Scale,
+            InMargin.Bottom * Scale);
+    }
+
 private:
     struct FCachedBarData
     {
