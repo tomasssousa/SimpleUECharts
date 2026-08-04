@@ -12,6 +12,7 @@ public class SimpleUECharts : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "InputCore",
                 "Slate",
                 "SlateCore",
                 "UMG"

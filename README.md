@@ -11,7 +11,7 @@ recalculation for ordinary updates. The plugin keeps the workflow simple:
 Chart->SetData(Data);
 ```
 
-The current implementation focuses on reusable bar-chart and pie-chart widgets
+The current implementation focuses on reusable bar, pie, and time-series widgets
 that can be updated from gameplay code, C++ UI code, or Blueprint.
 
 ## Target Language And Unreal Version
@@ -31,8 +31,10 @@ regular game/application builds rather than only inside the editor.
 
 The plugin currently provides:
 
-- Native `UWidget` wrappers for bar charts and pie charts
-- Native Slate rendering through `SBarChart` and `SPieChart`
+- Native `UWidget` wrappers for bar, pie, and time-series charts
+- Native Slate rendering through `SBarChart`, `SPieChart`, and `STimeSeriesChart`
+- Generic multi-series timestamp/value data with automatic X/Y scaling
+- Time-series axes, grid, markers, legend, hover tooltips, and series emphasis
 - Shared chart data model through `FChartDataPoint`
 - Shared styling model through `FChartStyle`, `FBarChartStyle`, and
   `FPieChartStyle`
@@ -67,20 +69,25 @@ SimpleUECharts/
 |       |   +-- Data/
 |       |   |   +-- ChartDataPoint.h
 |       |   |   +-- ChartStyles.h
+|       |   |   +-- TimeSeriesData.h
 |       |   +-- Widgets/
 |       |   |   +-- BarChartWidget.h
 |       |   |   +-- PieChartWidget.h
+|       |   |   +-- TimeSeriesChartWidget.h
 |       |   +-- Slate/
 |       |       +-- SBarChart.h
 |       |       +-- SPieChart.h
+|       |       +-- STimeSeriesChart.h
 |       +-- Private/
 |           +-- SimpleUECharts.cpp
 |           +-- Widgets/
 |           |   +-- BarChartWidget.cpp
 |           |   +-- PieChartWidget.cpp
+|           |   +-- TimeSeriesChartWidget.cpp
 |           +-- Slate/
 |               +-- SBarChart.cpp
 |               +-- SPieChart.cpp
+|               +-- STimeSeriesChart.cpp
 ```
 
 ### What Each Part Does
@@ -159,6 +166,7 @@ You can then include the widget headers where needed:
 ```cpp
 #include "Widgets/BarChartWidget.h"
 #include "Widgets/PieChartWidget.h"
+#include "Widgets/TimeSeriesChartWidget.h"
 #include "Data/ChartDataPoint.h"
 #include "Data/ChartStyles.h"
 ```
@@ -311,6 +319,7 @@ The current chart types are:
 
 - `UBarChartWidget` / `SBarChart`
 - `UPieChartWidget` / `SPieChart`
+- `UTimeSeriesChartWidget` / `STimeSeriesChart`
 
 The plugin deliberately stays focused on a small Unreal-native feature set.
 
@@ -318,7 +327,7 @@ Out of scope for the current version:
 
 - External charting libraries
 - Python rendering paths
-- Additional chart families beyond bar and pie
+- Additional chart families beyond bar, pie, and time series
 - Complex editor tooling
 - Real-time per-frame chart recomputation by default
 

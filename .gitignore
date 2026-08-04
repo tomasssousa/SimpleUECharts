@@ -3,7 +3,8 @@ Build/
 DerivedDataCache/
 Intermediate/
 Saved/
-docs/
+docs/*
+!docs/ROADMAP.md
 
 .vs/
 .vscode/

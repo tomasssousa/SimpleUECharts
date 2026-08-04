@@ -74,14 +74,28 @@ FMargin ScaleMargin(const FMargin& InMargin, float Scale)
 
 void SPieChart::Construct(const FArguments& InArgs)
 {
+    OnSelectionChanged = InArgs._OnSelectionChanged;
     RecalculateChart();
 }
 
 void SPieChart::SetData(const TArray<FChartDataPoint>& NewData)
 {
     Data = NewData;
+    if (!Data.IsValidIndex(SelectedSourceIndex) || Data[SelectedSourceIndex].Value <= 0.0f)
+    {
+        SelectedSourceIndex = INDEX_NONE;
+    }
     RecalculateChart();
     Invalidate(EInvalidateWidgetReason::Paint);
+}
+
+void SPieChart::ClearSelection()
+{
+    if (SelectedSourceIndex == INDEX_NONE) return;
+    SelectedSourceIndex = INDEX_NONE;
+    InvalidateCachedLayout();
+    Invalidate(EInvalidateWidgetReason::Paint);
+    OnSelectionChanged.ExecuteIfBound(INDEX_NONE);
 }
 
 void SPieChart::ClearData()
@@ -186,6 +200,9 @@ void SPieChart::InvalidateCachedLayout()
     CachedVertices.Reset();
     CachedIndices.Reset();
     CachedLegendEntries.Reset();
+    CachedPieCenter = FVector2f::ZeroVector;
+    CachedOuterRadius = 0.0f;
+    CachedInnerRadius = 0.0f;
 }
 
 void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
@@ -267,6 +284,9 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         ChartStyle.Padding.Left + Radius + (AvailablePieOffsetX * PieAlignment),
         ChartStyle.Padding.Top + (PieAreaHeight * 0.5f));
     const float InnerRadiusPixels = PieChartStyle.InnerRadius * Radius;
+    CachedPieCenter = Center;
+    CachedOuterRadius = Radius;
+    CachedInnerRadius = InnerRadiusPixels;
 
     const FSlateBrush* WhiteBrush = FCoreStyle::Get().GetBrush(TEXT("GenericWhiteBox"));
     if (WhiteBrush == nullptr)
@@ -326,7 +346,12 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         }
 
         const int32 SegmentCount = CalculateSliceSegmentCount(RenderSweep, Radius);
-        const FColor SliceColor = Slice.Color.ToFColor(true);
+        FLinearColor RenderColor = Slice.Color;
+        if (SelectedSourceIndex != INDEX_NONE && Slice.SourceIndex != SelectedSourceIndex)
+        {
+            RenderColor.A *= FMath::Clamp(PieChartStyle.UnselectedOpacity, 0.0f, 1.0f);
+        }
+        const FColor SliceColor = RenderColor.ToFColor(true);
 
         if (InnerRadiusPixels > KINDA_SMALL_NUMBER)
         {
@@ -429,7 +454,12 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
             const FChartDataPoint& Point = Data[Slice.SourceIndex];
 
             FCachedLegendEntry& LegendEntry = CachedLegendEntries.AddDefaulted_GetRef();
+            LegendEntry.SourceIndex = Slice.SourceIndex;
             LegendEntry.Color = Point.Color;
+            if (SelectedSourceIndex != INDEX_NONE && Slice.SourceIndex != SelectedSourceIndex)
+            {
+                LegendEntry.Color.A *= FMath::Clamp(PieChartStyle.UnselectedOpacity, 0.0f, 1.0f);
+            }
             LegendEntry.LabelText = PieChartStyle.bShowLabels ? BuildLegendLabelText(Point, SliceIndex) : FString();
             LegendEntry.ValueText = BuildLegendValueText(
                 Slice.Value,
@@ -454,6 +484,8 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
             {
                 LegendEntry.ValueTextPosition = FVector2D::ZeroVector;
             }
+
+            LegendEntry.HitRect = FSlateRect(LegendX, LegendY, LegendX + LegendWidth, LegendY + LegendEntryHeight);
 
             LegendY += LegendEntryHeight;
         }
@@ -558,6 +590,9 @@ int32 SPieChart::OnPaint(
     {
         for (const FCachedLegendEntry& LegendEntry : CachedLegendEntries)
         {
+            const float EntryOpacity = SelectedSourceIndex != INDEX_NONE && LegendEntry.SourceIndex != SelectedSourceIndex
+                ? FMath::Clamp(PieChartStyle.UnselectedOpacity, 0.0f, 1.0f)
+                : 1.0f;
             const FVector2D SwatchSize(LegendSwatchSize, LegendSwatchSize);
 
             FSlateDrawElement::MakeBox(
@@ -577,7 +612,7 @@ int32 SPieChart::OnPaint(
                     FText::FromString(LegendEntry.LabelText),
                     ChartFont,
                     DrawEffects,
-                    TextColor);
+                    TextColor * FLinearColor(1.0f, 1.0f, 1.0f, EntryOpacity));
             }
 
             if (!LegendEntry.ValueText.IsEmpty())
@@ -589,10 +624,57 @@ int32 SPieChart::OnPaint(
                     FText::FromString(LegendEntry.ValueText),
                     ChartFont,
                     DrawEffects,
-                    TextColor);
+                    TextColor * FLinearColor(1.0f, 1.0f, 1.0f, EntryOpacity));
             }
         }
     }
 
     return LayerId + (bHasValidBackground ? 2 : 1);
+}
+
+FReply SPieChart::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    if (MouseEvent.GetEffectingButton() != EKeys::LeftMouseButton) return FReply::Unhandled();
+
+    EnsureCachedLayout(MyGeometry.GetLocalSize());
+    const FVector2D Local = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
+    int32 HitSourceIndex = INDEX_NONE;
+
+    for (const FCachedLegendEntry& Entry : CachedLegendEntries)
+    {
+        if (Entry.HitRect.ContainsPoint(Local))
+        {
+            HitSourceIndex = Entry.SourceIndex;
+            break;
+        }
+    }
+
+    if (HitSourceIndex == INDEX_NONE && CachedOuterRadius > KINDA_SMALL_NUMBER)
+    {
+        const FVector2f Delta = FVector2f(Local) - CachedPieCenter;
+        const float Radius = Delta.Size();
+        if (Radius >= CachedInnerRadius && Radius <= CachedOuterRadius)
+        {
+            float Angle = FMath::Atan2(Delta.Y, Delta.X);
+            const float Start = FMath::DegreesToRadians(PieChartStyle.StartAngle);
+            while (Angle < Start) Angle += 2.0f * UE_PI;
+            while (Angle >= Start + 2.0f * UE_PI) Angle -= 2.0f * UE_PI;
+            for (const FPieSlice& Slice : CalculatedSlices)
+            {
+                if (Angle >= Slice.StartAngleRadians && Angle <= Slice.EndAngleRadians)
+                {
+                    HitSourceIndex = Slice.SourceIndex;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (HitSourceIndex == INDEX_NONE) return FReply::Unhandled();
+
+    SelectedSourceIndex = SelectedSourceIndex == HitSourceIndex ? INDEX_NONE : HitSourceIndex;
+    InvalidateCachedLayout();
+    Invalidate(EInvalidateWidgetReason::Paint);
+    OnSelectionChanged.ExecuteIfBound(SelectedSourceIndex);
+    return FReply::Handled();
 }
