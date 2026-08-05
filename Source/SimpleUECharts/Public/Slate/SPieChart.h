@@ -6,10 +6,13 @@
 #include "Rendering/RenderingCommon.h"
 #include "Widgets/SLeafWidget.h"
 
+DECLARE_DELEGATE_OneParam(FOnPieChartSelectionChanged, int32);
+
 class SIMPLEUECHARTS_API SPieChart : public SLeafWidget
 {
 public:
     SLATE_BEGIN_ARGS(SPieChart) {}
+        SLATE_EVENT(FOnPieChartSelectionChanged, OnSelectionChanged)
     SLATE_END_ARGS()
 
     void Construct(const FArguments& InArgs);
@@ -18,6 +21,8 @@ public:
     void ClearData();
     void SetChartStyle(const FChartStyle& InChartStyle);
     void SetPieChartStyle(const FPieChartStyle& InPieChartStyle);
+    void ClearSelection();
+    int32 GetSelectedIndex() const { return SelectedSourceIndex; }
 
     virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override;
 
@@ -29,6 +34,7 @@ public:
         int32 LayerId,
         const FWidgetStyle& InWidgetStyle,
         bool bParentEnabled) const override;
+    virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 
 private:
     struct FPieSlice
@@ -44,12 +50,14 @@ private:
 
     struct FCachedLegendEntry
     {
+        int32 SourceIndex = INDEX_NONE;
         FLinearColor Color = FLinearColor::White;
         FString LabelText;
         FString ValueText;
         FVector2D SwatchPosition = FVector2D::ZeroVector;
         FVector2D TextPosition = FVector2D::ZeroVector;
         FVector2D ValueTextPosition = FVector2D::ZeroVector;
+        FSlateRect HitRect;
     };
 
     void RecalculateChart();
@@ -68,4 +76,9 @@ private:
     mutable TArray<FSlateVertex> CachedVertices;
     mutable TArray<SlateIndex> CachedIndices;
     mutable TArray<FCachedLegendEntry> CachedLegendEntries;
+    mutable FVector2f CachedPieCenter = FVector2f::ZeroVector;
+    mutable float CachedOuterRadius = 0.0f;
+    mutable float CachedInnerRadius = 0.0f;
+    int32 SelectedSourceIndex = INDEX_NONE;
+    FOnPieChartSelectionChanged OnSelectionChanged;
 };

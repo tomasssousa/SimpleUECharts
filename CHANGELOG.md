@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Added generic multi-series time-series data, native Slate rendering, and a UMG wrapper.
+- Added cached axes/grid/line/marker/legend layout, hover tooltips, and click-to-emphasize interaction without per-frame chart recomputation.
+
 - Created the initial Runtime plugin structure and module setup for
   `SimpleUECharts`.
 - Added the shared chart data model through `FChartDataPoint`.

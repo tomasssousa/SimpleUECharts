@@ -4,6 +4,14 @@
 #include "Fonts/SlateFontInfo.h"
 #include "ChartStyles.generated.h"
 
+UENUM(BlueprintType)
+enum class EChartAxisValueMode : uint8
+{
+    Auto UMETA(DisplayName = "Auto"),
+    Integer UMETA(DisplayName = "Integer"),
+    Decimal UMETA(DisplayName = "Decimal")
+};
+
 USTRUCT(BlueprintType)
 struct SIMPLEUECHARTS_API FChartStyle
 {
@@ -101,4 +109,81 @@ struct SIMPLEUECHARTS_API FPieChartStyle
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "64.0"))
     float LegendSpacing;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float UnselectedOpacity;
+};
+
+USTRUCT(BlueprintType)
+struct SIMPLEUECHARTS_API FTimeSeriesChartStyle
+{
+    GENERATED_BODY()
+
+    FTimeSeriesChartStyle();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.5", UIMin = "0.5", UIMax = "8.0"))
+    float LineThickness;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "16.0"))
+    float PointRadius;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowPointMarkers;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowXAxis;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowYAxis;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowGridLines;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowLegend;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bShowTooltips;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bIncludeZeroInYRange;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    bool bUseFixedYRange;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    double MinimumY;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    double MaximumY;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    EChartAxisValueMode YAxisValueMode;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "2", ClampMax = "12"))
+    int32 XAxisTickCount;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "2", ClampMax = "12"))
+    int32 YAxisTickCount;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FString XAxisDateFormat;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FLinearColor AxisColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    FLinearColor GridLineColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Tooltip")
+    FLinearColor TooltipBackgroundColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Tooltip")
+    FLinearColor TooltipBorderColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Tooltip")
+    FLinearColor TooltipTextColor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float UnselectedOpacity;
 };
