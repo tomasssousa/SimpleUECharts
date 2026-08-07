@@ -35,6 +35,7 @@ FPieChartStyle::FPieChartStyle()
     , bShowValues(true)
     , bShowPercentages(true)
     , bShowLegend(true)
+    , LegendSide(EPieChartLegendSide::Right)
     , LegendSpacing(16.0f)
     , UnselectedOpacity(0.3f)
 {

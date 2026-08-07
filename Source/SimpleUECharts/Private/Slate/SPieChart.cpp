@@ -269,8 +269,11 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
         : 0.0f;
     const float HorizontalPadding = ChartStyle.Padding.Left + ChartStyle.Padding.Right;
     const float VerticalPadding = ChartStyle.Padding.Top + ChartStyle.Padding.Bottom;
-    const float PieAreaWidth = LocalSize.X - HorizontalPadding - LegendWidth - (PieChartStyle.bShowLegend ? PieChartStyle.LegendSpacing : 0.0f);
+    const bool bLegendOnLeft = PieChartStyle.bShowLegend && PieChartStyle.LegendSide == EPieChartLegendSide::Left;
+    const float LegendAndSpacingWidth = PieChartStyle.bShowLegend ? LegendWidth + PieChartStyle.LegendSpacing : 0.0f;
+    const float PieAreaWidth = LocalSize.X - HorizontalPadding - LegendAndSpacingWidth;
     const float PieAreaHeight = LocalSize.Y - VerticalPadding;
+    const float PieAreaLeft = ChartStyle.Padding.Left + (bLegendOnLeft ? LegendAndSpacingWidth : 0.0f);
     const float Radius = 0.5f * FMath::Min(PieAreaWidth, PieAreaHeight) * FMath::Min(ChartScale, 1.0f);
 
     if (PieAreaWidth <= 0.0f || PieAreaHeight <= 0.0f || Radius <= KINDA_SMALL_NUMBER)
@@ -281,7 +284,7 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
     const float PieAlignment = FMath::Clamp(PieChartStyle.PieHorizontalAlignment, 0.0f, 1.0f);
     const float AvailablePieOffsetX = FMath::Max(PieAreaWidth - (Radius * 2.0f), 0.0f);
     const FVector2f Center(
-        ChartStyle.Padding.Left + Radius + (AvailablePieOffsetX * PieAlignment),
+        PieAreaLeft + Radius + (AvailablePieOffsetX * PieAlignment),
         ChartStyle.Padding.Top + (PieAreaHeight * 0.5f));
     const float InnerRadiusPixels = PieChartStyle.InnerRadius * Radius;
     CachedPieCenter = Center;
@@ -444,7 +447,9 @@ void SPieChart::EnsureCachedLayout(const FVector2D& LocalSize) const
 
     if (PieChartStyle.bShowLegend)
     {
-        const float LegendX = ChartStyle.Padding.Left + PieAreaWidth + PieChartStyle.LegendSpacing;
+        const float LegendX = bLegendOnLeft
+            ? ChartStyle.Padding.Left
+            : PieAreaLeft + PieAreaWidth + PieChartStyle.LegendSpacing;
         const float TotalLegendHeight = CalculatedSlices.Num() * LegendEntryHeight;
         float LegendY = ChartStyle.Padding.Top + FMath::Max((PieAreaHeight - TotalLegendHeight) * 0.5f, 0.0f);
 
