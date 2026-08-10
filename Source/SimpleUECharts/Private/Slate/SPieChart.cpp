@@ -47,6 +47,14 @@ FString BuildLegendValueText(float Value, float Percentage, bool bIncludeValue, 
     return FString::Join(Parts, TEXT("  "));
 }
 
+FText BuildCenterTotalValueText(float Value)
+{
+    FNumberFormattingOptions ValueFormat;
+    ValueFormat.SetMaximumFractionalDigits(2);
+    ValueFormat.SetMinimumFractionalDigits(0);
+    return FText::AsNumber(Value, &ValueFormat);
+}
+
 float GetChartScale(const FChartStyle& InChartStyle)
 {
     return FMath::Max(0.1f, InChartStyle.ChartScale);
@@ -590,6 +598,49 @@ int32 SPieChart::OnPaint(
         0,
         0,
         DrawEffects);
+
+    if (PieChartStyle.bShowCenterTotal)
+    {
+        const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
+        FSlateFontInfo ValueFont = ChartFont;
+        ValueFont.Size = FMath::Max(
+            1,
+            FMath::RoundToInt(ValueFont.Size * FMath::Max(0.1f, PieChartStyle.CenterTotalValueTextScale)));
+
+        const FText ValueText = BuildCenterTotalValueText(TotalValue);
+        const FText LabelText = PieChartStyle.CenterTotalLabel.IsEmpty()
+            ? FText::FromString(TEXT("Total"))
+            : PieChartStyle.CenterTotalLabel;
+        const FVector2D ValueTextSize = FontMeasure->Measure(ValueText, ValueFont);
+        const FVector2D LabelTextSize = FontMeasure->Measure(LabelText, ChartFont);
+        const float RowGap = 2.0f * GetTextScale(ChartStyle);
+        const float TotalTextHeight = ValueTextSize.Y + RowGap + LabelTextSize.Y;
+        const FVector2D PieCenter(CachedPieCenter.X, CachedPieCenter.Y);
+        const FVector2D ValueTextPosition(
+            PieCenter.X - (ValueTextSize.X * 0.5f),
+            PieCenter.Y - (TotalTextHeight * 0.5f));
+        const FVector2D LabelTextPosition(
+            PieCenter.X - (LabelTextSize.X * 0.5f),
+            ValueTextPosition.Y + ValueTextSize.Y + RowGap);
+
+        FSlateDrawElement::MakeText(
+            OutDrawElements,
+            LayerId + (bHasValidBackground ? 2 : 1),
+            AllottedGeometry.ToPaintGeometry(ValueTextPosition, ValueTextSize),
+            ValueText,
+            ValueFont,
+            DrawEffects,
+            TextColor);
+
+        FSlateDrawElement::MakeText(
+            OutDrawElements,
+            LayerId + (bHasValidBackground ? 2 : 1),
+            AllottedGeometry.ToPaintGeometry(LabelTextPosition, LabelTextSize),
+            LabelText,
+            ChartFont,
+            DrawEffects,
+            TextColor);
+    }
 
     if (PieChartStyle.bShowLegend)
     {
