@@ -35,7 +35,11 @@ FPieChartStyle::FPieChartStyle()
     , bShowValues(true)
     , bShowPercentages(true)
     , bShowLegend(true)
+    , LegendSide(EPieChartLegendSide::Right)
     , LegendSpacing(16.0f)
+    , bShowCenterTotal(true)
+    , CenterTotalLabel(FText::FromString(TEXT("Total")))
+    , CenterTotalValueTextScale(2.5f)
     , UnselectedOpacity(0.3f)
 {
 }

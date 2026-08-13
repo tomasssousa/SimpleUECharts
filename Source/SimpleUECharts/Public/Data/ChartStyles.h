@@ -76,6 +76,13 @@ struct SIMPLEUECHARTS_API FBarChartStyle
     FLinearColor GridLineColor;
 };
 
+UENUM(BlueprintType)
+enum class EPieChartLegendSide : uint8
+{
+    Right UMETA(DisplayName = "Right"),
+    Left UMETA(DisplayName = "Left")
+};
+
 USTRUCT(BlueprintType)
 struct SIMPLEUECHARTS_API FPieChartStyle
 {
@@ -107,8 +114,20 @@ struct SIMPLEUECHARTS_API FPieChartStyle
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
     bool bShowLegend;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart")
+    EPieChartLegendSide LegendSide;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", UIMin = "0.0", UIMax = "64.0"))
     float LegendSpacing;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Center Total")
+    bool bShowCenterTotal;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Center Total")
+    FText CenterTotalLabel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart|Center Total", meta = (ClampMin = "0.1", UIMin = "0.1", UIMax = "4.0"))
+    float CenterTotalValueTextScale;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chart", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float UnselectedOpacity;
